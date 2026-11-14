@@ -2,7 +2,7 @@
 
 Civilization II's cities, on `base-city-lifecycle`: founding, the 21 squares a city works, growth and famine with
 Civ2's food box, unit support, specialists and trade corruption. The numbers in RULES.TXT come from `civ2-rules`'
-effective @COSMIC values; the rest are in `data/cityRules.ts`, each with the OpenCiv2 function it comes from
+effective @COSMIC values; the tables by government are civ2-government's, and the rest are in `data/cityRules.ts`, each with the OpenCiv2 function it comes from
 (richardpenman/civ2@49f26ec).
 
 - **Founding** (`Rules/City/created`): the city's build (asked for as a new city's), growth and centre; a road and
@@ -14,7 +14,7 @@ effective @COSMIC values; the rest are in `data/cityRules.ts`, each with the Ope
   the 21 squares are specialists.
 - **Upkeep** (`Rules/City/cost`): 2 food a citizen; 1 food a unit that settles up to Monarchy, 2 above; 1 shield a unit
   past the free ones (the city's size under Anarchy and Despotism, 3 under Monarchy and Communism, 8 under
-  Fundamentalism, none under the Republic and Democracy). Units whose role is diplomacy or trade cost nothing; under
+  Fundamentalism, none under the Republic and Democracy), from civ2-government's `unitSupport` tables. Units whose role is diplomacy or trade cost nothing; under
   Fundamentalism a Fanatic is counted but never charged. Roles come from `base-unit-role`.
 - **Specialists** (`Rules/City/yield`): an Entertainer gives 2 luxuries, a Tax Collector 3 gold, a Scientist 3 research.
 - **Corruption** (`lib/corruption`): distance × trade × 3 / (divisor × 20), divisors 4, 5, 6, 7, 7, 8, 8 in Civ2's

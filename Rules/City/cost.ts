@@ -24,10 +24,12 @@ import {
   productionSupport,
 } from '@civ-clone/base-government-unit-support/lib/unitSupport';
 import {
-  freeUnitSupport,
+  freeUnits,
+  productionPerUnit,
   settlerFood,
-  unitShieldCost,
-} from '../../data/cityRules';
+} from '@civ-clone/civ2-government/unitSupport';
+import { Despotism } from '../../Governments';
+import PlayerGovernment from '@civ-clone/core-government/PlayerGovernment';
 import City from '@civ-clone/core-city/City';
 import Cost from '@civ-clone/core-city/Rules/Cost';
 import Criterion from '@civ-clone/core-rule/Criterion';
@@ -44,7 +46,8 @@ import { hasRole } from '@civ-clone/base-unit-role/roleOf';
 
 // A city's upkeep, as Civilization II has it (OpenCiv2 `src/auto/city.cpp`, richardpenman/civ2@49f26ec): its citizens
 //  eat @COSMIC's food each, its units that settle eat by government (`city_calc_food_box_rows`), and each unit it
-//  supports past its free ones costs a shield (`city_calc_unit_support`, `city_count_unit_support`).
+//  supports past its free ones costs a shield (`city_calc_unit_support`, `city_count_unit_support`). The tables by
+//  government are civ2-government's (`unitSupport`).
 export const getRules: (
   cityGrowthRegistry?: CityGrowthRegistry,
   playerGovernmentRegistry?: PlayerGovernmentRegistry,
@@ -64,11 +67,22 @@ export const getRules: (
     settles = (unit: Unit): boolean => hasRole(unit, SettleRole, ruleRegistry),
     government = (city: City): number =>
       governmentOf(city.player(), playerGovernmentRegistry),
-    free = (city: City): number => {
-      const free = freeUnitSupport[government(city)];
-
-      return free === 'size' ? cityGrowthRegistry.getByCity(city).size() : free;
-    };
+    // A player with no government yet is treated as under Despotism (`lib/government`).
+    playerGovernment = (city: City): PlayerGovernment => {
+      try {
+        return playerGovernmentRegistry.getByPlayer(city.player());
+      } catch (e) {
+        return {
+          is: (...governments: unknown[]): boolean =>
+            governments.includes(Despotism),
+        } as PlayerGovernment;
+      }
+    },
+    free = (city: City): number =>
+      freeUnits(
+        playerGovernment(city),
+        cityGrowthRegistry.getByCity(city).size()
+      );
 
   return [
     new Cost(
@@ -90,7 +104,7 @@ export const getRules: (
         foodSupport(
           unitRegistry.getByCity(city),
           settles,
-          settlerFood(government(city))
+          settlerFood(playerGovernment(city))
         )
       )
     ),
@@ -107,7 +121,7 @@ export const getRules: (
           unitRegistry.getByCity(city),
           supported,
           free(city),
-          unitShieldCost
+          productionPerUnit
         ).filter(
           (support: Yield): boolean =>
             !(
