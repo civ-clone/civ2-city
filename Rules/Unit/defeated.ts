@@ -24,6 +24,7 @@ import Criterion from '@civ-clone/core-rule/Criterion';
 import Defeated from '@civ-clone/core-unit/Rules/Defeated';
 import Effect from '@civ-clone/core-rule/Effect';
 import Unit from '@civ-clone/core-unit/Unit';
+import { Water } from '@civ-clone/core-terrain/Types';
 import isHuman from '@civ-clone/civ2-difficulty/isHuman';
 import { levelOf } from '@civ-clone/civ2-difficulty/level';
 
@@ -40,9 +41,11 @@ export const getRules: (
   gameDifficultyRegistry: GameDifficultyRegistry = gameDifficultyRegistryInstance,
   clientRegistry: ClientRegistry = clientRegistryInstance
 ): Defeated[] => [
-  // A city whose defender loses an attack loses a citizen, except a person's city on Chieftain (OpenCiv2
-  //  `src/auto/unit_combat.cpp` `unit_resolve_attack_remove_loser`, richardpenman/civ2@49f26ec). City Walls and the
-  //  Great Wall, which also spare it there, are civ2-city-improvement's and civ2-wonder's, and not yet asked.
+  // A city whose defender loses an attack loses a citizen, unless the attack came from the sea or the city is a
+  //  person's on Chieftain (OpenCiv2 `src/auto/unit_combat.cpp` `unit_resolve_attack_remove_loser`,
+  //  richardpenman/civ2@49f26ec: `tile_is_ocean(x2, y2)` is the attacker's square, `civ5` the defender's owner). City
+  //  Walls and the Great Wall, which also spare it there, are civ2-city-improvement's and civ2-wonder's, and not yet
+  //  asked.
   new Defeated(
     'civ2-city:unit/defeated/shrink-defended-city',
     new Criterion(
@@ -50,6 +53,10 @@ export const getRules: (
         action instanceof Attack &&
         action.to() === defeated.tile() &&
         cityRegistry.getByTile(action.to()) !== null
+    ),
+    new Criterion(
+      (defeated: Unit, by: Unit): boolean =>
+        !(by.tile().terrain() instanceof Water)
     ),
     new Criterion(
       (defeated: Unit): boolean =>

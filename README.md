@@ -22,8 +22,8 @@ effective @COSMIC values; the tables by government are civ2-government's, and th
   Despotism add the level; none under Fundamentalism and Democracy; halved in the Palace's city.
 - **Capture** (`Rules/City/captured`): the box is emptied, Auto turned off and the item kept; the city loses a citizen,
   unless it was incited or retaken by its founder and has only one.
-- **Defence** (`Rules/Unit/defeated`): a city whose defender loses an attack loses a citizen, except a person's city on
-  Chieftain.
+- **Defence** (`Rules/Unit/defeated`): a city whose defender loses an attack loses a citizen, unless the attack came
+  from the sea or the city is a person's on Chieftain.
 
 ## Not yet (Civ2 M2a deviations and gaps)
 
@@ -32,7 +32,7 @@ effective @COSMIC values; the tables by government are civ2-government's, and th
   Courthouse halving (civ2-city-improvement), and the distance is the world's own, not Civ2's diagonal measure.
 - **City square:** irrigation and a road, as Civ1's; Civ2's mine bonus where the terrain can't be irrigated and the
   centre's farmland aren't modelled.
-- **Capture:** no plunder, lost improvements, stolen advance, partisans or civil war; the previous owner's units are
+- **Capture:** the city's founder is its original player (Civ2 records the last owner before each capture); no plunder, lost improvements, stolen advance, partisans or civil war; the previous owner's units are
   disbanded, not rehomed.
 - **Defence:** City Walls and the Great Wall don't spare the city yet (civ2-city-improvement, civ2-wonder).
 - **Famine:** Civ2 leaves a computer player's unseen city's settlers alone; this disbands them. No food caravans.

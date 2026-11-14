@@ -10,6 +10,8 @@ import {
 import { CorruptionInput, tradeCorruption } from '../lib/corruption';
 import { corruptionDivisor } from '../data/cityRules';
 import { expect } from 'chai';
+import governmentIndex from '@civ-clone/civ2-rules/lib/governmentIndex';
+import { governments } from '../Governments';
 
 describe('tradeCorruption', (): void => {
   const corruption = (input: Partial<CorruptionInput>): number =>
@@ -92,5 +94,11 @@ describe('tradeCorruption', (): void => {
     expect(
       corruption({ government: COMMUNISM, amount: 100, capital: true })
     ).equal(1);
+  });
+});
+
+describe('Governments', (): void => {
+  it("are in Civilization II's order", (): void => {
+    expect(governments.map(governmentIndex)).eql([0, 1, 2, 3, 4, 5, 6]);
   });
 });

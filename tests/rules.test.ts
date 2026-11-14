@@ -1,5 +1,6 @@
 import { atLevel, instanceOf, playedBy, sized } from './lib/stubs';
 import { Game } from '@civ-clone/core-game';
+import { Grassland, Ocean } from '@civ-clone/civ2-world/Terrains';
 import Attack from '@civ-clone/base-unit-action-attack/Attack';
 import Captured from '@civ-clone/core-city/Rules/Captured';
 import City from '@civ-clone/core-city/City';
@@ -8,7 +9,7 @@ import Rule from '@civ-clone/core-rule/Rule';
 import captured from '../Rules/City/captured';
 import defeated from '../Rules/Unit/defeated';
 import { expect } from 'chai';
-import register from '../index';
+import register from '../registerRules';
 
 const byId = <T extends Rule<any, any>>(rules: T[], id: string): T =>
   rules.find((rule) => rule.id() === id)!;
@@ -73,7 +74,9 @@ describe('unit:defeated', (): void => {
   const human = { name: 'human' },
     computer = { name: 'computer' },
     tile = {},
-    shrinks = (level: number, player: unknown): boolean =>
+    land = { terrain: () => instanceOf(Grassland) },
+    sea = { terrain: () => instanceOf(Ocean) },
+    shrinks = (level: number, player: unknown, from: unknown = land): boolean =>
       byId(
         defeated(
           { getByTile: () => ({}) } as any,
@@ -85,7 +88,7 @@ describe('unit:defeated', (): void => {
         'civ2-city:unit/defeated/shrink-defended-city'
       ).validate(
         { tile: () => tile, player: () => player },
-        {},
+        { tile: () => from },
         instanceOf(Attack, { to: () => tile })
       );
 
@@ -93,6 +96,10 @@ describe('unit:defeated', (): void => {
     expect(shrinks(0, human)).false;
     expect(shrinks(0, computer)).true;
     expect(shrinks(1, human)).true;
+  });
+
+  it('spares it an attack from the sea', (): void => {
+    expect(shrinks(3, computer, sea)).false;
   });
 });
 
