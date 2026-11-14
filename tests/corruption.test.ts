@@ -56,6 +56,10 @@ describe('tradeCorruption', (): void => {
     expect(corruption({ amount: 0 })).equal(0);
   });
 
+  it('counts no distance for more than 32', (): void => {
+    expect(corruption({ distance: 40, amount: 100 })).equal(80);
+  });
+
   it("adds the level to a person's distance under Anarchy and Despotism only, up to 32", (): void => {
     expect(corruption({ government: DESPOTISM, human: true, level: 3 })).equal(
       Math.trunc((13 * 20 * 3) / 100)

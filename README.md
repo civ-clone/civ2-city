@@ -34,6 +34,12 @@ effective @COSMIC values; the tables by government are civ2-government's, and th
   centre's farmland aren't modelled.
 - **Capture:** the city's founder is its original player (Civ2 records the last owner before each capture); no plunder, lost improvements, stolen advance, partisans or civil war; the previous owner's units are
   disbanded, not rehomed.
+- **Growth limits and the Granary:** the Aqueduct (8) and Sewer System (12) caps and the Granary's or Pyramids' half
+  box are civ2-city-improvement's and civ2-wonder's.
+- **The computer players' late-game food box:** after turn 200, above Warlord, Civ2 takes up to 2 rows off while a
+  person leads (civ2-difficulty's `foodBoxRows` leaves it out).
+- **Fanatics** are exempt from support by their class (`base-unit-fanatic`), not by a unit flag or trait.
+- **A city destroyed** (`city_delete`) disbands the units it supported: no partisans and no rehoming.
 - **Defence:** City Walls and the Great Wall don't spare the city yet (civ2-city-improvement, civ2-wonder).
 - **Famine:** Civ2 leaves a computer player's unseen city's settlers alone; this disbands them. No food caravans.
 - **Auto build:** a city on Auto doesn't choose for itself (`building-cancelled`, `building-complete` and turn-start

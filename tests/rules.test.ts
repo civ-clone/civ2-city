@@ -2,6 +2,10 @@ import { atLevel, instanceOf, playedBy, sized } from './lib/stubs';
 import { Game } from '@civ-clone/core-game';
 import { Grassland, Ocean } from '@civ-clone/civ2-world/Terrains';
 import Attack from '@civ-clone/base-unit-action-attack/Attack';
+import CityGrowth from '@civ-clone/core-city-growth/CityGrowth';
+import CityGrowthRegistry from '@civ-clone/core-city-growth/CityGrowthRegistry';
+import RuleRegistry from '@civ-clone/core-rule/RuleRegistry';
+import growthCost from '../Rules/City/growth-cost';
 import Captured from '@civ-clone/core-city/Rules/Captured';
 import City from '@civ-clone/core-city/City';
 import InciteRevolt from '@civ-clone/base-unit-action-incite-revolt/InciteRevolt';
@@ -67,6 +71,57 @@ describe('city:captured', (): void => {
       ['clearQueue'],
       ['reprice'],
     ]);
+  });
+});
+
+describe('city:captured growth cost', (): void => {
+  it("costs the box at the new owner's rows, unless the city is gone", (): void => {
+    const log: string[] = [],
+      growth = { setCost: () => log.push('setCost'), size: () => 2 },
+      rule = byId(
+        captured(undefined, { getByCity: () => growth } as any),
+        'civ2-city:city/captured/set-growth-cost'
+      );
+
+    rule.process(instanceOf(City, { destroyed: () => false }), {});
+    rule.process(instanceOf(City, { destroyed: () => true }), {});
+
+    expect(log).eql(['setCost']);
+  });
+
+  it("charges a computer player's rows once a person's city is taken", async (): Promise<void> => {
+    const ruleRegistry = new RuleRegistry(),
+      cityGrowthRegistry = new CityGrowthRegistry(),
+      person = { name: 'person' },
+      computer = { name: 'computer' };
+
+    let owner: unknown = person;
+
+    ruleRegistry.register(
+      ...growthCost(atLevel(5), playedBy(person)),
+      ...captured(undefined, cityGrowthRegistry)
+    );
+
+    const city = instanceOf(City, {
+        player: () => owner,
+        destroyed: () => false,
+        originalPlayer: () => person,
+      }),
+      growth = new CityGrowth(city, ruleRegistry);
+
+    cityGrowthRegistry.register(growth);
+    growth.grow();
+    growth.setCost();
+
+    expect(growth.cost().value()).equal(30);
+
+    owner = computer;
+    byId(
+      captured(undefined, cityGrowthRegistry),
+      'civ2-city:city/captured/set-growth-cost'
+    ).process(city, computer);
+
+    expect(growth.cost().value()).equal(24);
   });
 });
 

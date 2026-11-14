@@ -103,6 +103,19 @@ export const getRules: (
       cityGrowthRegistry.getByCity(capturedCity).shrink(Captured)
     )
   ),
+  // The food box is the new owner's: a computer player's rows differ from a person's (`growth-cost`). After `shrink`, so
+  //  a city that shrank is costed once, and not for a city that's gone (checked here, as every `Criterion` is evaluated
+  //  before any `Effect` runs).
+  new Captured(
+    'civ2-city:city/captured/set-growth-cost',
+    new Effect((capturedCity: City): void => {
+      if (capturedCity.destroyed()) {
+        return;
+      }
+
+      cityGrowthRegistry.getByCity(capturedCity).setCost();
+    })
+  ),
   new Captured(
     'civ2-city:city/captured/emit',
     new Effect(

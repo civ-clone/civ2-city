@@ -46,7 +46,8 @@ export const tradeCorruption = ({
   let measured =
     government === COMMUNISM
       ? cosmic.communismPalaceDistance
-      : distance ?? noCapitalDistance;
+      : // `city_calc_capital_link` starts at 32 and only lowers it, so no distance counts for more.
+        Math.min(distance ?? noCapitalDistance, maximumDistance);
 
   if (
     government !== COMMUNISM &&

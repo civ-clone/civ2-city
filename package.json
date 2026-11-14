@@ -59,7 +59,7 @@
     "@civ-clone/base-unit-fanatic": "^0.1.0",
     "@civ-clone/base-unit-role": "^0.1.0",
     "@civ-clone/civ2-difficulty": "github:civ-clone/civ2-difficulty",
-    "@civ-clone/civ2-government": "github:civ-clone/civ2-government#feat/initial",
+    "@civ-clone/civ2-government": "github:civ-clone/civ2-government",
     "@civ-clone/civ2-rules": "github:civ-clone/civ2-rules",
     "@civ-clone/core-city": "^0.1.24",
     "@civ-clone/core-city-build": "^0.1.22",

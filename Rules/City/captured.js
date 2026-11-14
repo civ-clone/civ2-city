@@ -31,6 +31,15 @@ const getRules = (unitRegistry = UnitRegistry_1.instance, cityGrowthRegistry = C
     new Captured_1.default('civ2-city:city/captured/shrink', new Criterion_1.default((capturedCity, capturingPlayer, player, cause) => cityGrowthRegistry.getByCity(capturedCity).size() > 1 ||
         (!(cause instanceof InciteRevolt_1.default) &&
             capturedCity.originalPlayer() !== capturingPlayer)), new Effect_1.default((capturedCity) => cityGrowthRegistry.getByCity(capturedCity).shrink(Captured_1.default))),
+    // The food box is the new owner's: a computer player's rows differ from a person's (`growth-cost`). After `shrink`, so
+    //  a city that shrank is costed once, and not for a city that's gone (checked here, as every `Criterion` is evaluated
+    //  before any `Effect` runs).
+    new Captured_1.default('civ2-city:city/captured/set-growth-cost', new Effect_1.default((capturedCity) => {
+        if (capturedCity.destroyed()) {
+            return;
+        }
+        cityGrowthRegistry.getByCity(capturedCity).setCost();
+    })),
     new Captured_1.default('civ2-city:city/captured/emit', new Effect_1.default((capturedCity, capturingPlayer, player) => {
         engine.emit('city:captured', capturedCity, capturingPlayer, player);
     })),
