@@ -42,8 +42,8 @@ import { keepCapturedBuild } from '@civ-clone/base-city-lifecycle/lib/captured';
 import { reassignWorkers } from '@civ-clone/base-city-lifecycle/lib/assignWorkers';
 
 // What happens to a city that changes hands, as Civilization II has it (OpenCiv2 `src/auto/city.cpp`
-//  `city_capture_aftermath`, richardpenman/civ2@49f26ec): its shield box is emptied (`shield_box = 0`), Auto is turned
-//  off (the flags mask clears `CITYF_AUTOBUILD`), it keeps what it was building, and it loses a citizen. Plunder, lost
+//  `city_capture_aftermath`, richardpenman/civ2@49f26ec): its shield box is emptied, Auto is turned off, it keeps what
+//  it was building, and it loses a citizen. Plunder, lost
 //  improvements, the stolen advance, partisans and rehoming its units aren't here (civ2-city's README).
 export const getRules: (
   unitRegistry?: UnitRegistry,
@@ -84,8 +84,7 @@ export const getRules: (
     )
   ),
   // A city conquered from another than its founder loses a citizen, so one of size 1 is destroyed; one taken by a
-  //  Diplomat or Spy, or retaken by its founder, loses one only when it has one to spare:
-  //  `if ((capture_mode == 0 && was_founder == 0) || 1 < cities[city].size)`.
+  //  Diplomat or Spy, or retaken by its founder, loses one only when it has one to spare (`city_capture_aftermath`).
   new Captured(
     'civ2-city:city/captured/shrink',
     new Criterion(
@@ -103,9 +102,9 @@ export const getRules: (
       cityGrowthRegistry.getByCity(capturedCity).shrink(Captured)
     )
   ),
-  // The food box is the new owner's: a computer player's rows differ from a person's (`growth-cost`). After `shrink`, so
-  //  a city that shrank is costed once, and not for a city that's gone (checked here, as every `Criterion` is evaluated
-  //  before any `Effect` runs).
+  // The food box is the new owner's: a computer player's rows differ from a person's (`growth-cost`). A city that
+  //  shrank was costed by `shrink/set-growth-cost` already and is costed again here, which is harmless; one that's
+  //  gone isn't (checked here, as every `Criterion` is evaluated before any `Effect` runs).
   new Captured(
     'civ2-city:city/captured/set-growth-cost',
     new Effect((capturedCity: City): void => {

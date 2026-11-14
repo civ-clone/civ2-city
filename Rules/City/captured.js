@@ -17,8 +17,8 @@ const destroyed_1 = require("@civ-clone/base-city-lifecycle/lib/destroyed");
 const captured_1 = require("@civ-clone/base-city-lifecycle/lib/captured");
 const assignWorkers_1 = require("@civ-clone/base-city-lifecycle/lib/assignWorkers");
 // What happens to a city that changes hands, as Civilization II has it (OpenCiv2 `src/auto/city.cpp`
-//  `city_capture_aftermath`, richardpenman/civ2@49f26ec): its shield box is emptied (`shield_box = 0`), Auto is turned
-//  off (the flags mask clears `CITYF_AUTOBUILD`), it keeps what it was building, and it loses a citizen. Plunder, lost
+//  `city_capture_aftermath`, richardpenman/civ2@49f26ec): its shield box is emptied, Auto is turned off, it keeps what
+//  it was building, and it loses a citizen. Plunder, lost
 //  improvements, the stolen advance, partisans and rehoming its units aren't here (civ2-city's README).
 const getRules = (unitRegistry = UnitRegistry_1.instance, cityGrowthRegistry = CityGrowthRegistry_1.instance, cityBuildRegistry = CityBuildRegistry_1.instance, engine = Engine_1.instance, playerWorldRegistry = PlayerWorldRegistry_1.instance, workedTileRegistry = WorkedTileRegistry_1.instance, specialistRegistry = SpecialistRegistry_1.instance, availableSpecialistRegistry = AvailableSpecialistRegistry_1.instance) => [
     new Captured_1.default('civ2-city:city/captured/reset-build-progress', new Effect_1.default((capturedCity) => cityBuildRegistry.getByCity(capturedCity).progress().set(0))),
@@ -26,14 +26,13 @@ const getRules = (unitRegistry = UnitRegistry_1.instance, cityGrowthRegistry = C
     // Whoever takes it, the item stays, at the new owner's price.
     new Captured_1.default('civ2-city:city/captured/keep-build', new Effect_1.default((capturedCity) => (0, captured_1.keepCapturedBuild)(cityBuildRegistry.getByCity(capturedCity)))),
     // A city conquered from another than its founder loses a citizen, so one of size 1 is destroyed; one taken by a
-    //  Diplomat or Spy, or retaken by its founder, loses one only when it has one to spare:
-    //  `if ((capture_mode == 0 && was_founder == 0) || 1 < cities[city].size)`.
+    //  Diplomat or Spy, or retaken by its founder, loses one only when it has one to spare (`city_capture_aftermath`).
     new Captured_1.default('civ2-city:city/captured/shrink', new Criterion_1.default((capturedCity, capturingPlayer, player, cause) => cityGrowthRegistry.getByCity(capturedCity).size() > 1 ||
         (!(cause instanceof InciteRevolt_1.default) &&
             capturedCity.originalPlayer() !== capturingPlayer)), new Effect_1.default((capturedCity) => cityGrowthRegistry.getByCity(capturedCity).shrink(Captured_1.default))),
-    // The food box is the new owner's: a computer player's rows differ from a person's (`growth-cost`). After `shrink`, so
-    //  a city that shrank is costed once, and not for a city that's gone (checked here, as every `Criterion` is evaluated
-    //  before any `Effect` runs).
+    // The food box is the new owner's: a computer player's rows differ from a person's (`growth-cost`). A city that
+    //  shrank was costed by `shrink/set-growth-cost` already and is costed again here, which is harmless; one that's
+    //  gone isn't (checked here, as every `Criterion` is evaluated before any `Effect` runs).
     new Captured_1.default('civ2-city:city/captured/set-growth-cost', new Effect_1.default((capturedCity) => {
         if (capturedCity.destroyed()) {
             return;

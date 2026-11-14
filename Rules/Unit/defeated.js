@@ -15,8 +15,8 @@ const isHuman_1 = require("@civ-clone/civ2-difficulty/isHuman");
 const level_1 = require("@civ-clone/civ2-difficulty/level");
 const getRules = (cityRegistry = CityRegistry_1.instance, cityGrowthRegistry = CityGrowthRegistry_1.instance, engine = Engine_1.instance, gameDifficultyRegistry = GameDifficultyRegistry_1.instance, clientRegistry = ClientRegistry_1.instance) => [
     // A city whose defender loses an attack loses a citizen, unless the attack came from the sea or the city is a
-    //  person's on Chieftain (OpenCiv2 `src/auto/unit_combat.cpp` `unit_resolve_attack_remove_loser`,
-    //  richardpenman/civ2@49f26ec: `tile_is_ocean(x2, y2)` is the attacker's square, `civ5` the defender's owner). City
+    //  person's (the defender's owner) on Chieftain (OpenCiv2 `src/auto/unit_combat.cpp`
+    //  `unit_resolve_attack_remove_loser`, richardpenman/civ2@49f26ec, which looks at the attacker's square). City
     //  Walls and the Great Wall, which also spare it there, are civ2-city-improvement's and civ2-wonder's, and not yet
     //  asked.
     new Defeated_1.default('civ2-city:unit/defeated/shrink-defended-city', new Criterion_1.default((defeated, by, action) => action instanceof Attack_1.default &&
