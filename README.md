@@ -91,8 +91,10 @@ effective @COSMIC values; the tables by government are civ2-government's, and th
 - **A city destroyed** (`city_delete`) disbands the units it supported: no partisans and no rehoming.
 - **Defence:** City Walls and the Great Wall don't spare the city yet (civ2-city-improvement, civ2-wonder).
 - **Famine:** Civ2 leaves a computer player's unseen city's settlers alone; this disbands them. No food caravans.
-- **Auto build:** only improvements are scored, so a city on Auto never chooses a Wonder or a unit (units only finds
-  nothing); no CITYPREF.TXT list. The AI's continent policy (`continent_policy`, 5 assumed), reputation, vendettas,
+- **Auto build:** only improvements are scored: Civ2's Wonder and unit scores aren't ported, so units only finds
+  nothing, and Wonders rank only by civ2-wonder's own `BuildPriority`. civ2-city-improvement's and civ2-wonder's
+  `BuildPriority` rules (on another scale) still add to a city on Auto's ranking until they leave Auto cities alone,
+  so an Auto city can choose what Civ2 wouldn't, and seldom finds nothing. No CITYPREF.TXT list. The AI's continent policy (`continent_policy`, 5 assumed), reputation, vendettas,
   power ranks (the first person stands for `best_human_rank`), subversion, the spaceship race and the AEGIS Cruiser
   aren't kept, so their terms are left out; "next to the ocean" is any ocean, not ocean body 1.
 - **Trade routes:** none in M2a.
