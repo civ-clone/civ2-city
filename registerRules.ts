@@ -41,7 +41,19 @@ export const register = (game: Game): void => {
       game.playerWorlds,
       game.workedTiles,
       game.specialists,
-      game.availableSpecialists
+      game.availableSpecialists,
+      {
+        cityRegistry: game.cities,
+        clientRegistry: game.clients,
+        playerGovernmentRegistry: game.playerGovernments,
+        playerRegistry: game.players,
+        playerResearchRegistry: game.playerResearch,
+        playerTreasuryRegistry: game.playerTreasuries,
+        ruleRegistry: game.rules,
+        tileImprovementRegistry: game.tileImprovements,
+        unitImprovementRegistry: game.unitImprovements,
+        randomNumberGenerator: game.rng,
+      }
     ),
     ...cityCorruption({
       cityBuildRegistry: game.cityBuilds,

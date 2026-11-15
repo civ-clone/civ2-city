@@ -36,15 +36,18 @@ import Criterion from '@civ-clone/core-rule/Criterion';
 import Effect from '@civ-clone/core-rule/Effect';
 import InciteRevolt from '@civ-clone/base-unit-action-incite-revolt/InciteRevolt';
 import Player from '@civ-clone/core-player/Player';
-import Unit from '@civ-clone/core-unit/Unit';
-import { destroyUnits } from '@civ-clone/base-city-lifecycle/lib/destroyed';
+import {
+  CaptureDependencies,
+  captureRules,
+  withCaptureDefaults,
+} from '../../lib/captureAftermath';
 import { keepCapturedBuild } from '@civ-clone/base-city-lifecycle/lib/captured';
 import { reassignWorkers } from '@civ-clone/base-city-lifecycle/lib/assignWorkers';
 
 // What happens to a city that changes hands, as Civilization II has it (OpenCiv2 `src/auto/city.cpp`
 //  `city_capture_aftermath`, richardpenman/civ2@49f26ec): its shield box is emptied, Auto is turned off, it keeps what
-//  it was building, and it loses a citizen. Plunder, lost
-//  improvements, the stolen advance, partisans and rehoming its units aren't here (civ2-city's README).
+//  it was building, and it loses a citizen. Plunder, the units it supported and Partisans are in `captured-aftermath`;
+//  lost improvements and the Palace are civ2-city-improvement's, the stolen advance civ2-science's.
 export const getRules: (
   unitRegistry?: UnitRegistry,
   cityGrowthRegistry?: CityGrowthRegistry,
@@ -53,7 +56,8 @@ export const getRules: (
   playerWorldRegistry?: PlayerWorldRegistry,
   workedTileRegistry?: WorkedTileRegistry,
   specialistRegistry?: SpecialistRegistry,
-  availableSpecialistRegistry?: AvailableSpecialistRegistry
+  availableSpecialistRegistry?: AvailableSpecialistRegistry,
+  capture?: CaptureDependencies
 ) => Captured[] = (
   unitRegistry: UnitRegistry = unitRegistryInstance,
   cityGrowthRegistry: CityGrowthRegistry = cityGrowthRegistryInstance,
@@ -62,7 +66,8 @@ export const getRules: (
   playerWorldRegistry: PlayerWorldRegistry = playerWorldRegistryInstance,
   workedTileRegistry: WorkedTileRegistry = workedTileRegistryInstance,
   specialistRegistry: SpecialistRegistry = specialistRegistryInstance,
-  availableSpecialistRegistry: AvailableSpecialistRegistry = availableSpecialistRegistryInstance
+  availableSpecialistRegistry: AvailableSpecialistRegistry = availableSpecialistRegistryInstance,
+  capture: CaptureDependencies = {}
 ): Captured[] => [
   new Captured(
     'civ2-city:city/captured/reset-build-progress',
@@ -123,16 +128,13 @@ export const getRules: (
       }
     )
   ),
-  // Not the units now the capturer's, which defected with an incited city.
-  new Captured(
-    'civ2-city:city/captured/destroy-supported-units',
-    new Effect((capturedCity: City, capturingPlayer: Player): void =>
-      destroyUnits(
-        unitRegistry
-          .getByCity(capturedCity)
-          .filter((unit: Unit): boolean => unit.player() !== capturingPlayer)
-      )
-    )
+  // Plunder (`High`, then after every `Normal` rule), the units the city supported (`Normal`, here: after the shrink,
+  //  which may have destroyed the city and its units with it, as `city_delete` does) and Partisans (after `Normal`).
+  ...captureRules(
+    unitRegistry,
+    cityGrowthRegistry,
+    engine,
+    withCaptureDefaults(capture)
   ),
   new Captured(
     'civ2-city:city/captured/reassign-workers',
