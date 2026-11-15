@@ -20,6 +20,7 @@ const shrink_1 = require("./Rules/City/shrink");
 const tile_reassigned_1 = require("./Rules/City/tile-reassigned");
 const tile_released_1 = require("./Rules/City/tile-released");
 const tile_worked_1 = require("./Rules/City/tile-worked");
+const tile_yield_1 = require("./Rules/City/tile-yield");
 const tiles_1 = require("./Rules/City/tiles");
 const yield_1 = require("./Rules/City/yield");
 const action_1 = require("./Rules/Player/action");
@@ -60,7 +61,7 @@ const register = (game) => {
         ruleRegistry: game.rules,
         turn: game.turn,
         wonderRegistry: game.wonders,
-    }), ...(0, process_yield_1.default)(game.cityBuilds, game.cityGrowth, game.units, game.rules), ...(0, renamed_1.default)(game.cityNames), ...(0, shrink_1.default)(game.workedTiles, game.specialists, game.engine), ...(0, tiles_1.default)(), ...(0, tile_reassigned_1.default)(game.playerWorlds, game.cityGrowth, game.workedTiles, game.specialists, game.availableSpecialists), ...(0, tile_released_1.default)(game.engine), ...(0, tile_worked_1.default)(game.engine), ...(0, yield_1.default)(game.cityImprovements, game.playerGovernments, game.specialists, game.difficulty, game.clients), ...(0, action_1.default)(game.cityBuilds, game.cities, game.specialists), ...(0, turn_start_1.default)(game.cities, game.units, game.workedTiles, game.rules), ...(0, defeated_1.default)(game.engine), ...(0, moved_1.default)(game.rules, game.workedTiles), ...(0, unsupported_1.default)());
+    }), ...(0, process_yield_1.default)(game.cityBuilds, game.cityGrowth, game.units, game.rules), ...(0, renamed_1.default)(game.cityNames), ...(0, shrink_1.default)(game.workedTiles, game.specialists, game.engine), ...(0, tile_yield_1.default)(game.tileImprovements, game.playerGovernments, game.playerResearch, game.pendingEffects), ...(0, tiles_1.default)(), ...(0, tile_reassigned_1.default)(game.playerWorlds, game.cityGrowth, game.workedTiles, game.specialists, game.availableSpecialists), ...(0, tile_released_1.default)(game.engine), ...(0, tile_worked_1.default)(game.engine), ...(0, yield_1.default)(game.cityImprovements, game.playerGovernments, game.specialists, game.difficulty, game.clients), ...(0, action_1.default)(game.cityBuilds, game.cities, game.specialists), ...(0, turn_start_1.default)(game.cities, game.units, game.workedTiles, game.rules), ...(0, defeated_1.default)(game.engine), ...(0, moved_1.default)(game.rules, game.workedTiles), ...(0, unsupported_1.default)());
 };
 exports.register = register;
 // The plugin loader imports each package for this side effect. Until it passes a `Game` of its own, dropping it would

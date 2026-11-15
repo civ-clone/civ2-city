@@ -17,6 +17,7 @@ import cityShrink from './Rules/City/shrink';
 import cityTileReassigned from './Rules/City/tile-reassigned';
 import cityTileReleased from './Rules/City/tile-released';
 import cityTileWorked from './Rules/City/tile-worked';
+import cityTileYield from './Rules/City/tile-yield';
 import cityTiles from './Rules/City/tiles';
 import cityYield from './Rules/City/yield';
 import playerAction from './Rules/Player/action';
@@ -121,6 +122,12 @@ export const register = (game: Game): void => {
     ),
     ...cityRenamed(game.cityNames),
     ...cityShrink(game.workedTiles, game.specialists, game.engine),
+    ...cityTileYield(
+      game.tileImprovements,
+      game.playerGovernments,
+      game.playerResearch,
+      game.pendingEffects
+    ),
     ...cityTiles(),
     ...cityTileReassigned(
       game.playerWorlds,

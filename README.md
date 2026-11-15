@@ -16,6 +16,13 @@ effective @COSMIC values; the tables by government are civ2-government's, and th
   past the free ones (the city's size under Anarchy and Despotism, 3 under Monarchy and Communism, 8 under
   Fundamentalism, none under the Republic and Democracy), from civ2-government's `unitSupport` tables. Units whose role is diplomacy or trade cost nothing; under
   Fundamentalism a Fanatic is counted but never charged. Roles come from `base-unit-role`.
+- **Each square** (`Rules/City/tile-yield`, `lib/tileYieldPipeline`): what a square gives the city working it runs
+  through `CityTileYield` rules in the order of `city_tile_yield`, one priority per step, which civ2-city-improvement
+  and civ2-wonder register their per-square bonuses at. civ2-city's own steps: the square's yields up to its road
+  (civ2-world's), the city's square counted as mined where its terrain has no irrigation bonus and giving at least 1
+  shield, the railroad's half again (on the city's square once Railroad is known), the −1 below Monarchy unless the
+  city celebrates, +1 trade under the Republic and Democracy or from Monarchy up while celebrating, and pollution's
+  halving. The city's worked squares and its workers' choice of squares both ask `City#tileYields`.
 - **Specialists** (`Rules/City/yield`): an Entertainer gives 2 luxuries, a Tax Collector 3 gold, a Scientist 3 research.
 - **Corruption** (`lib/corruption`, `Rules/City/corruption`): distance × trade × 3 / (divisor × 20), at most the trade,
   divisors 4, 5, 6, 7, 7, 8, 8 in Civ2's government order. The distance is to the player's nearest Palace by Civ2's
@@ -60,8 +67,6 @@ effective @COSMIC values; the tables by government are civ2-government's, and th
 - **Corruption and waste:** no alliances in civ2 yet, so every other player's city and unit blocks the capital link
   (`CapitalLink`'s `allied` option). Land masses are the world's as built: Civ2 recounts them when terrain changes. On a
   hexagonal grid there's no logical square axis, so the distance is the rounded straight line and no road links.
-- **City square:** irrigation and a road, as Civ1's; Civ2's mine bonus where the terrain can't be irrigated and the
-  centre's farmland aren't modelled.
 - **Capture:** the city's founder is its original player (Civ2 records the last owner before each capture); no civil
   war. Power ranks are taken as the capture starts, not at the start of the turn, and reputation and vendettas
   aren't modelled, so Partisans are never veterans unless a ruleset passes `reputation`/`vendetta`. Not yet: a
