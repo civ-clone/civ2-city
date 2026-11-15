@@ -6,6 +6,7 @@ const building_complete_1 = require("./Rules/City/building-complete");
 const building_held_1 = require("./Rules/City/building-held");
 const can_be_worked_1 = require("./Rules/City/can-be-worked");
 const captured_1 = require("./Rules/City/captured");
+const corruption_1 = require("./Rules/City/corruption");
 const cost_1 = require("./Rules/City/cost");
 const created_1 = require("./Rules/City/created");
 const destroyed_1 = require("./Rules/City/destroyed");
@@ -29,7 +30,30 @@ const moved_1 = require("./Rules/Unit/moved");
 const unsupported_1 = require("./Rules/Unit/unsupported");
 const register = (game) => {
     (0, registerAvailableSpecialists_1.default)(game.availableSpecialists);
-    game.rules.register(...(0, building_complete_1.default)(game.engine), ...(0, building_held_1.default)(game.engine), ...(0, can_be_worked_1.default)(game.cities, game.units, game.workedTiles), ...(0, captured_1.default)(game.units, game.cityGrowth, game.cityBuilds, game.engine, game.playerWorlds, game.workedTiles, game.specialists, game.availableSpecialists), ...(0, cost_1.default)(game.cityGrowth, game.playerGovernments, game.units, game.rules), ...(0, created_1.default)(game.tileImprovements, game.cityBuilds, game.cityGrowth, game.cities, game.playerWorlds, game.rules, game.availableCityBuildItems, game.engine, game.workedTiles, game.specialists, game.availableSpecialists), ...(0, destroyed_1.default)(game.tileImprovements, game.engine, game.units, game.workedTiles, game.specialists, game.rules), ...(0, food_exhausted_1.default)(game.engine), ...(0, food_storage_1.default)(game.rules), ...(0, grow_1.default)(game.cityGrowth, game.playerWorlds, game.workedTiles, game.specialists, game.availableSpecialists, game.engine), ...(0, growth_cost_1.default)(game.difficulty, game.clients, {
+    game.rules.register(...(0, building_complete_1.default)(game.engine), ...(0, building_held_1.default)(game.engine), ...(0, can_be_worked_1.default)(game.cities, game.units, game.workedTiles), ...(0, captured_1.default)(game.units, game.cityGrowth, game.cityBuilds, game.engine, game.playerWorlds, game.workedTiles, game.specialists, game.availableSpecialists, {
+        cityRegistry: game.cities,
+        clientRegistry: game.clients,
+        playerGovernmentRegistry: game.playerGovernments,
+        playerRegistry: game.players,
+        playerResearchRegistry: game.playerResearch,
+        playerTreasuryRegistry: game.playerTreasuries,
+        ruleRegistry: game.rules,
+        tileImprovementRegistry: game.tileImprovements,
+        unitImprovementRegistry: game.unitImprovements,
+        randomNumberGenerator: game.rng,
+    }), ...(0, corruption_1.default)({
+        cityBuildRegistry: game.cityBuilds,
+        cityImprovementRegistry: game.cityImprovements,
+        cityRegistry: game.cities,
+        clientRegistry: game.clients,
+        gameDifficultyRegistry: game.difficulty,
+        landMassRegistry: game.landMasses,
+        pendingEffectRegistry: game.pendingEffects,
+        playerGovernmentRegistry: game.playerGovernments,
+        playerResearchRegistry: game.playerResearch,
+        tileImprovementRegistry: game.tileImprovements,
+        unitRegistry: game.units,
+    }), ...(0, cost_1.default)(game.cityGrowth, game.playerGovernments, game.units, game.rules), ...(0, created_1.default)(game.tileImprovements, game.cityBuilds, game.cityGrowth, game.cities, game.playerWorlds, game.rules, game.availableCityBuildItems, game.engine, game.workedTiles, game.specialists, game.availableSpecialists), ...(0, destroyed_1.default)(game.tileImprovements, game.engine, game.units, game.workedTiles, game.specialists, game.rules), ...(0, food_exhausted_1.default)(game.engine), ...(0, food_storage_1.default)(game.rules), ...(0, grow_1.default)(game.cityGrowth, game.playerWorlds, game.workedTiles, game.specialists, game.availableSpecialists, game.engine), ...(0, growth_cost_1.default)(game.difficulty, game.clients, {
         cityImprovementRegistry: game.cityImprovements,
         playerRegistry: game.players,
         playerResearchRegistry: game.playerResearch,
