@@ -1,8 +1,12 @@
 import { Game, defaultGame } from '@civ-clone/core-game';
+import cityAutoBuild from './Rules/City/auto-build';
+import cityBuildPriority from './Rules/City/build-priority';
 import cityBuildingComplete from './Rules/City/building-complete';
+import cityBuild from './Rules/City/build';
 import cityBuildingHeld from './Rules/City/building-held';
 import cityCanBeWorked from './Rules/City/can-be-worked';
 import cityCaptured from './Rules/City/captured';
+import cityCorruption from './Rules/City/corruption';
 import cityCost from './Rules/City/cost';
 import cityCreated from './Rules/City/created';
 import cityDestroyed from './Rules/City/destroyed';
@@ -16,6 +20,8 @@ import cityShrink from './Rules/City/shrink';
 import cityTileReassigned from './Rules/City/tile-reassigned';
 import cityTileReleased from './Rules/City/tile-released';
 import cityTileWorked from './Rules/City/tile-worked';
+import citySpecialistAvailable from './Rules/City/specialist-available';
+import cityTileYield from './Rules/City/tile-yield';
 import cityTiles from './Rules/City/tiles';
 import cityYield from './Rules/City/yield';
 import playerAction from './Rules/Player/action';
@@ -31,6 +37,32 @@ export const register = (game: Game): void => {
   game.rules.register(
     ...cityBuildingComplete(game.engine),
     ...cityBuildingHeld(game.engine),
+    ...cityAutoBuild({
+      cityBuildRegistry: game.cityBuilds,
+      cityRegistry: game.cities,
+      pendingEffectRegistry: game.pendingEffects,
+      ruleRegistry: game.rules,
+    }),
+    ...cityBuildPriority({
+      cityBuildRegistry: game.cityBuilds,
+      cityGrowthRegistry: game.cityGrowth,
+      cityImprovementRegistry: game.cityImprovements,
+      cityRegistry: game.cities,
+      clientRegistry: game.clients,
+      gameDifficultyRegistry: game.difficulty,
+      interactionRegistry: game.interactions,
+      landMassRegistry: game.landMasses,
+      pendingEffectRegistry: game.pendingEffects,
+      playerGovernmentRegistry: game.playerGovernments,
+      playerRegistry: game.players,
+      playerResearchRegistry: game.playerResearch,
+      playerTradeRatesRegistry: game.playerTradeRates,
+      ruleRegistry: game.rules,
+      specialistRegistry: game.specialists,
+      tileImprovementRegistry: game.tileImprovements,
+      unitRegistry: game.units,
+      wonderRegistry: game.wonders,
+    }),
     ...cityCanBeWorked(game.cities, game.units, game.workedTiles),
     ...cityCaptured(
       game.units,
@@ -40,8 +72,36 @@ export const register = (game: Game): void => {
       game.playerWorlds,
       game.workedTiles,
       game.specialists,
-      game.availableSpecialists
+      game.availableSpecialists,
+      {
+        cityRegistry: game.cities,
+        clientRegistry: game.clients,
+        playerGovernmentRegistry: game.playerGovernments,
+        playerRegistry: game.players,
+        playerResearchRegistry: game.playerResearch,
+        playerTreasuryRegistry: game.playerTreasuries,
+        ruleRegistry: game.rules,
+        tileImprovementRegistry: game.tileImprovements,
+        unitImprovementRegistry: game.unitImprovements,
+        randomNumberGenerator: game.rng,
+        pendingEffectRegistry: game.pendingEffects,
+        turn: game.turn,
+      }
     ),
+    ...cityCorruption({
+      cityBuildRegistry: game.cityBuilds,
+      cityImprovementRegistry: game.cityImprovements,
+      cityRegistry: game.cities,
+      clientRegistry: game.clients,
+      gameDifficultyRegistry: game.difficulty,
+      landMassRegistry: game.landMasses,
+      pendingEffectRegistry: game.pendingEffects,
+      playerGovernmentRegistry: game.playerGovernments,
+      playerResearchRegistry: game.playerResearch,
+      tileImprovementRegistry: game.tileImprovements,
+      turn: game.turn,
+      unitRegistry: game.units,
+    }),
     ...cityCost(
       game.cityGrowth,
       game.playerGovernments,
@@ -67,7 +127,8 @@ export const register = (game: Game): void => {
       game.units,
       game.workedTiles,
       game.specialists,
-      game.rules
+      game.rules,
+      game.pendingEffects
     ),
     ...cityFoodExhausted(game.engine),
     ...cityFoodStorage(game.rules),
@@ -79,15 +140,32 @@ export const register = (game: Game): void => {
       game.availableSpecialists,
       game.engine
     ),
-    ...cityGrowthCost(game.difficulty, game.clients),
+    ...cityGrowthCost(game.difficulty, game.clients, {
+      cityImprovementRegistry: game.cityImprovements,
+      playerRegistry: game.players,
+      playerResearchRegistry: game.playerResearch,
+      ruleRegistry: game.rules,
+      turn: game.turn,
+      wonderRegistry: game.wonders,
+    }),
     ...cityProcessYield(
       game.cityBuilds,
       game.cityGrowth,
       game.units,
-      game.rules
+      game.rules,
+      game.playerTreasuries,
+      game.playerGovernments
     ),
+    ...cityBuild(game.clients, game.difficulty, game.rules),
+    ...citySpecialistAvailable(game.cityGrowth),
     ...cityRenamed(game.cityNames),
     ...cityShrink(game.workedTiles, game.specialists, game.engine),
+    ...cityTileYield(
+      game.tileImprovements,
+      game.playerGovernments,
+      game.playerResearch,
+      game.pendingEffects
+    ),
     ...cityTiles(),
     ...cityTileReassigned(
       game.playerWorlds,

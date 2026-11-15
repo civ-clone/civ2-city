@@ -9,3 +9,4 @@ export { Research } from '@civ-clone/base-city-yield-research/Research';
 export { Trade } from '@civ-clone/base-terrain-yield-trade/Trade';
 export { UnitSupportFood } from '@civ-clone/base-city-yield-unit-support-food/UnitSupportFood';
 export { UnitSupportProduction } from '@civ-clone/base-city-yield-unit-support-production/UnitSupportProduction';
+export { Waste } from './Waste';

@@ -27,7 +27,12 @@ import {
   releaseSpecialists,
   releaseWorkedTiles,
 } from '@civ-clone/base-city-lifecycle/lib/destroyed';
+import {
+  PendingEffectRegistry,
+  instance as pendingEffectRegistryInstance,
+} from '@civ-clone/core-pending-effect';
 import City from '@civ-clone/core-city/City';
+import { forgetFounder } from '../../lib/founder';
 import Destroyed from '@civ-clone/core-city/Rules/Destroyed';
 import Effect from '@civ-clone/core-rule/Effect';
 import Irrigation from '@civ-clone/base-tile-improvement-irrigation/Irrigation';
@@ -41,14 +46,16 @@ export const getRules: (
   unitRegistry?: UnitRegistry,
   workedTileRegistry?: WorkedTileRegistry,
   specialistRegistry?: SpecialistRegistry,
-  ruleRegistry?: RuleRegistry
+  ruleRegistry?: RuleRegistry,
+  pendingEffectRegistry?: PendingEffectRegistry
 ) => Destroyed[] = (
   tileImprovementRegistry: TileImprovementRegistry = tileImprovementRegistryInstance,
   engine: Engine = engineInstance,
   unitRegistry: UnitRegistry = unitRegistryInstance,
   workedTileRegistry: WorkedTileRegistry = workedTileRegistryInstance,
   specialistRegistry: SpecialistRegistry = specialistRegistryInstance,
-  ruleRegistry: RuleRegistry = ruleRegistryInstance
+  ruleRegistry: RuleRegistry = ruleRegistryInstance,
+  pendingEffectRegistry: PendingEffectRegistry = pendingEffectRegistryInstance
 ): Destroyed[] => [
   // The irrigation `created` gave the city's square goes with it, through the `Removed` rules, so the square's yields
   //  are worked out again and whoever shows it is told.
@@ -86,6 +93,13 @@ export const getRules: (
     'civ2-city:city/destroyed/release-specialists',
     new Effect((city: City): void =>
       releaseSpecialists(city, specialistRegistry)
+    )
+  ),
+  // A city that's gone keeps no founder in the save (`lib/founder`).
+  new Destroyed(
+    'civ2-city:city/destroyed/forget-founder',
+    new Effect((city: City): void =>
+      forgetFounder(city, { pendingEffectRegistry })
     )
   ),
 ];

@@ -19,7 +19,23 @@ import {
   buildWithProduction,
   storeFood,
 } from '@civ-clone/base-city-lifecycle/lib/processYield';
+import {
+  PlayerGovernmentRegistry,
+  instance as playerGovernmentRegistryInstance,
+} from '@civ-clone/core-government/PlayerGovernmentRegistry';
+import {
+  PlayerTreasuryRegistry,
+  instance as playerTreasuryRegistryInstance,
+} from '@civ-clone/core-treasury/PlayerTreasuryRegistry';
+import {
+  isBuildingCapitalization,
+  payOut,
+} from '@civ-clone/base-city-improvement-capitalization/lib/capitalizationRules';
+import { ANARCHY } from '@civ-clone/civ2-rules/data/governments';
 import City from '@civ-clone/core-city/City';
+import CityBuild from '@civ-clone/core-city-build/CityBuild';
+import Gold from '@civ-clone/base-city-yield-gold/Gold';
+import governmentOf from '../../lib/government';
 import Criterion from '@civ-clone/core-rule/Criterion';
 import Effect from '@civ-clone/core-rule/Effect';
 import ProcessYield from '@civ-clone/core-city/Rules/ProcessYield';
@@ -30,12 +46,16 @@ export const getRules: (
   cityBuildRegistry?: CityBuildRegistry,
   cityGrowthRegistry?: CityGrowthRegistry,
   unitRegistry?: UnitRegistry,
-  ruleRegistry?: RuleRegistry
+  ruleRegistry?: RuleRegistry,
+  playerTreasuryRegistry?: PlayerTreasuryRegistry,
+  playerGovernmentRegistry?: PlayerGovernmentRegistry
 ) => ProcessYield[] = (
   cityBuildRegistry: CityBuildRegistry = cityBuildRegistryInstance,
   cityGrowthRegistry: CityGrowthRegistry = cityGrowthRegistryInstance,
   unitRegistry: UnitRegistry = unitRegistryInstance,
-  ruleRegistry: RuleRegistry = ruleRegistryInstance
+  ruleRegistry: RuleRegistry = ruleRegistryInstance,
+  playerTreasuryRegistry: PlayerTreasuryRegistry = playerTreasuryRegistryInstance,
+  playerGovernmentRegistry: PlayerGovernmentRegistry = playerGovernmentRegistryInstance
 ): ProcessYield[] => [
   new ProcessYield(
     'civ2-city:city/process-yield/food',
@@ -57,16 +77,61 @@ export const getRules: (
         cityYield instanceof Production
     ),
     // Units the city can't support go, furthest first, and there's no production while there's civil disorder.
+    //
+    // While the city builds Capitalization, its shields (after waste and its units' support) never go into the box
+    //  (`city_process_production`, city_production.cpp ~3031: the box is frozen), but into the treasury, one for one,
+    //  after the Marketplace's and Bank's bonuses (`city_split_trade`, city.cpp ~3617), and only outside civil
+    //  disorder and Anarchy (`city_process_disorder`). The build is still checked, so its `Hold` and queue rules run.
     new Effect(
       (cityYield: Production, city: City, cityYields: Yield[]): void => {
+        const cityBuild = cityBuildRegistry.getByCity(city);
+
+        if (!isBuildingCapitalization(cityBuild)) {
+          buildWithProduction(
+            cityYield,
+            city,
+            cityYields,
+            UnitSupportProduction,
+            cityBuildRegistry,
+            ruleRegistry
+          );
+
+          return;
+        }
+
+        let net = 0;
+
+        // `buildWithProduction` disbands what the city can't support and leaves out the turn's production in disorder;
+        //  here what it would add is paid out instead.
         buildWithProduction(
           cityYield,
           city,
           cityYields,
           UnitSupportProduction,
-          cityBuildRegistry,
+          {
+            getByCity: () =>
+              ({
+                add: (production: Yield): void => {
+                  net = production.value();
+                },
+                check: (): void => {},
+              } as unknown as CityBuild),
+          } as unknown as CityBuildRegistry,
           ruleRegistry
         );
+
+        payOut(
+          city,
+          net,
+          { playerTreasuryRegistry },
+          {
+            YieldType: Gold,
+            pays: (city: City): boolean =>
+              governmentOf(city.player(), playerGovernmentRegistry) !== ANARCHY,
+          }
+        );
+
+        cityBuild.check();
       }
     )
   ),

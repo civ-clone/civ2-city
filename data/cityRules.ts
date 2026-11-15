@@ -22,6 +22,16 @@ export const noCapitalDistance = 32;
 /** The furthest a distance counts, once the human's level is added to it (`city_calc_corruption`). */
 export const maximumDistance = 32;
 
+/** The furthest the distance counts for shield waste, before the level is added (`city_calc_shields_pollution` passes
+ *  `clamp_distance`). */
+export const wasteDistance = 16;
+
+/** The governments without shield waste (`city_calc_shields_pollution`). */
+export const noShieldWaste: readonly number[] = Object.freeze([
+  FUNDAMENTALISM,
+  DEMOCRACY,
+]);
+
 /** The governments without trade corruption (`city_calc_trade_happiness`). */
 export const noTradeCorruption: readonly number[] = Object.freeze([
   FUNDAMENTALISM,

@@ -6,7 +6,7 @@ import {
   CityImprovementRegistry,
   instance as cityImprovementRegistryInstance,
 } from '@civ-clone/core-city-improvement/CityImprovementRegistry';
-import { Corruption, Gold, Luxuries, Research, Trade } from '../../Yields';
+import { Gold, Luxuries, Research } from '../../Yields';
 import { Entertainer, Scientist, TaxCollector } from '../../Specialists';
 import {
   GameDifficultyRegistry,
@@ -28,17 +28,10 @@ import {
 import City from '@civ-clone/core-city/City';
 import Criterion from '@civ-clone/core-rule/Criterion';
 import Effect from '@civ-clone/core-rule/Effect';
-import { High } from '@civ-clone/core-rule/Priorities';
-import Palace from '@civ-clone/base-city-improvement-palace/Palace';
 import Priority from '@civ-clone/core-rule/Priority';
 import Specialist from '@civ-clone/core-city/Specialist';
 import Yield from '@civ-clone/core-yield/Yield';
 import YieldRule from '@civ-clone/core-city/Rules/Yield';
-import governmentOf from '../../lib/government';
-import isHuman from '@civ-clone/civ2-difficulty/isHuman';
-import { levelOf } from '@civ-clone/civ2-difficulty/level';
-import { reduceYield } from '@civ-clone/core-yield/lib/reduceYields';
-import tradeCorruption from '../../lib/corruption';
 
 export const getRules: (
   cityImprovementRegistry?: CityImprovementRegistry,
@@ -53,48 +46,19 @@ export const getRules: (
   gameDifficultyRegistry: GameDifficultyRegistry = gameDifficultyRegistryInstance,
   clientRegistry: ClientRegistry = clientRegistryInstance
 ): YieldRule[] => [
-  // Corruption takes from the city's trade (`lib/corruption`), measured from its player's Palace by the world's own
-  //  distance.
-  new YieldRule(
-    'civ2-city:city/yield/corruption',
-    new High(),
-    new Effect((city: City, yields: Yield[]): Yield => {
-      const [capital] = cityImprovementRegistry
-          .filter(
-            (cityImprovement) =>
-              cityImprovement instanceof Palace &&
-              // A Palace is destroyed when its city is captured, but stays registered: it's no one's capital.
-              !cityImprovement.destroyed() &&
-              city.player() === cityImprovement.city().player()
-          )
-          .map((cityImprovement) => cityImprovement.city()),
-        distance = capital
-          ? Math.round(capital.tile().distanceFrom(city.tile()))
-          : null;
-
-      return new Corruption(
-        tradeCorruption({
-          amount: reduceYield(yields, Trade),
-          government: governmentOf(city.player(), playerGovernmentRegistry),
-          distance,
-          human: isHuman(city.player(), clientRegistry),
-          level: levelOf(gameDifficultyRegistry),
-          capital: capital === city,
-        }),
-        distance === null ? 'no-capital' : String(distance)
-      );
-    })
-  ),
-
   new YieldRule(
     'civ2-city:city/yield/worked-tiles',
     new Priority(0), // X High
-    new Effect((city: City) =>
-      city
+    // What each square gives this city goes through its `CityTileYield` rules (`Rules/City/tile-yield`, in the order
+    //  of `lib/tileYieldPipeline`), fetched once for all its squares.
+    new Effect((city: City) => {
+      const rules = city.tileYieldRules();
+
+      return city
         .tilesWorked()
         .entries()
         .flatMap((tile) =>
-          tile.yields(city.player()).flatMap(
+          city.tileYields(tile, rules).flatMap(
             (tileYield: Yield) =>
               new (tileYield.constructor as typeof Yield)(
                 tileYield.value(),
@@ -106,8 +70,8 @@ export const getRules: (
                     .join('-')
               )
           )
-        )
-    )
+        );
+    })
   ),
 
   // Each specialist's yield, before improvements (`data/cityRules`).
