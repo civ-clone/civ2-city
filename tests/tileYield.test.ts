@@ -226,6 +226,25 @@ describe('what a square gives its city', (): void => {
     expect(totals(city.tileYields(ocean))).to.eql([1, 0, 4]);
   });
 
+  it('works the Colossus’ +1 through celebration', async (): Promise<void> => {
+    // Ocean: 2 trade, Colossus 3. Despotism: 3 > 2 loses 1, unless celebrating. Monarchy celebrating: +1, 4.
+    for (const [government, celebrating, trade] of [
+      [Despotism, false, 2],
+      [Despotism, true, 3],
+      [Monarchy, false, 3],
+      [Monarchy, true, 4],
+    ] as [typeof Government, boolean, number][]) {
+      const { addCityRules, city, ruleRegistry, square, totals, plusOne } =
+          await setUp(government, { celebrating }),
+        ocean = square(3, 0, Ocean);
+
+      addCityRules();
+      ruleRegistry.register(plusOne('colossusOcean', Trade));
+
+      expect(totals(city.tileYields(ocean))[2]).to.equal(trade);
+    }
+  });
+
   it('counts the city’s square as mined where it can’t be irrigated, and gives it at least 1 shield', async (): Promise<void> => {
     const glacier = await setUp(Monarchy);
 
