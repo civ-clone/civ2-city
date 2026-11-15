@@ -1,6 +1,6 @@
 {
   "name": "@civ-clone/civ2-city",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Civilization II's cities: founding, the 21 squares a city works, growth and famine with Civ2's food box, unit support, specialists and corruption, on base-city-lifecycle.",
   "main": "index.js",
   "repository": "git@github.com:civ-clone/civ2-city.git",
