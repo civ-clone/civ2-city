@@ -81,7 +81,43 @@ describe('what a city builds', (): void => {
     ).eql([]);
   });
 
-  it('costs nothing on Chieftain or for a computer player', (): void => {
+  it('halves a computer player’s box on a change to a Wonder from anything else, on any level', (): void => {
+    [0, 3].forEach((level) => {
+      const computer = setUp(false, level);
+
+      // 25 → 12, rounded down, carried-over shields included.
+      expect(
+        computer.ruleRegistry.process(
+          ProductionChanged,
+          computer.cityBuild,
+          Warriors,
+          Pyramids,
+          25
+        )
+      ).eql([12]);
+      expect(
+        computer.ruleRegistry.process(
+          ProductionChanged,
+          computer.cityBuild,
+          Capitalization,
+          Pyramids,
+          25
+        )
+      ).eql([12]);
+      // A Wonder to a Wonder, or to anything else, costs nothing.
+      expect(
+        computer.ruleRegistry.process(
+          ProductionChanged,
+          computer.cityBuild,
+          Pyramids,
+          Temple,
+          25
+        )
+      ).eql([]);
+    });
+  });
+
+  it('costs nothing on Chieftain, or for a computer player outside a change to a Wonder', (): void => {
     expect(
       setUp(true, 0).ruleRegistry.process(
         ProductionChanged,

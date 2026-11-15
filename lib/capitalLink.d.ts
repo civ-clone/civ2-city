@@ -10,6 +10,7 @@ import {
 } from '@civ-clone/base-route-link/lib/RouteNetwork';
 import { TileImprovementRegistry } from '@civ-clone/core-tile-improvement/TileImprovementRegistry';
 import { UnitRegistry } from '@civ-clone/core-unit/UnitRegistry';
+import { Turn } from '@civ-clone/core-turn-based-game/Turn';
 import City from '@civ-clone/core-city/City';
 import CityImprovement from '@civ-clone/core-city-improvement/CityImprovement';
 import LandMass from '@civ-clone/core-world/LandMass';
@@ -33,6 +34,8 @@ export interface CapitalLinkDependencies {
   playerResearchRegistry?: PlayerResearchRegistry;
   tileImprovementRegistry?: TileImprovementRegistry;
   unitRegistry?: UnitRegistry;
+  /** The game's turn: Palaces and links are kept for the turn they were worked out in. */
+  turn?: Turn;
   /**
    * Whether `player` has an alliance with `other` (`TREATY_ALLIANCE`). Civ2 in civ-clone has no alliances yet, so by
    *  default no one has.
@@ -54,6 +57,10 @@ export type CapitalLinkResult = {
  *  it is flooded once per capital square (at most 47 × 47 squares) and kept until `invalidate()`, which civ2-city's
  *  `TerrainChanged` rule calls. Each link then walks at most 50 squares, asking each for its city, its units and its
  *  grade afresh, as units come and go. Land masses are looked up once per square, until `invalidate()`.
+ *
+ * Each player's Palaces are found once a turn, and each city's link is worked out once a turn (Civ2 works it out as the
+ *  city is processed, `city_calc_capital_link`), until `invalidateCapitals()`, which civ2-city's rules call when a city
+ *  improvement is built, a city is captured or destroyed, or a square's terrain changes.
  */
 export declare class CapitalLink {
   private _allied;
@@ -66,6 +73,10 @@ export declare class CapitalLink {
   private _playerResearchRegistry;
   private _routes;
   private _unitRegistry;
+  private _turn;
+  private _version;
+  private _palaces;
+  private _links;
   constructor({
     cityImprovementRegistry,
     cityRegistry,
@@ -73,10 +84,16 @@ export declare class CapitalLink {
     playerResearchRegistry,
     tileImprovementRegistry,
     unitRegistry,
+    turn,
     allied,
   }?: CapitalLinkDependencies);
   /** Forget the cost grids and land masses, after a square's terrain changes. */
   invalidate(): void;
+  /** Forget the turn's Palaces and links, after a Palace may have been built or lost. */
+  invalidateCapitals(): void;
+  private key;
+  /** The cities with a standing Palace of each player, found once a turn. */
+  private palaces;
   has(city: City, Improvement: typeof CityImprovement): boolean;
   /**
    * The first half of `city_calc_capital_link`: how far the city is from its player's nearest Palace, and which city

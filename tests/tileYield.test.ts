@@ -38,7 +38,7 @@ import TileImprovementRegistry from '@civ-clone/core-tile-improvement/TileImprov
 import Yield from '@civ-clone/core-yield/Yield';
 import { expect } from 'chai';
 import mapWorld from './lib/mapWorld';
-import tileYield from '../Rules/City/tile-yield';
+import tileYield, { laterSquareSteps } from '../Rules/City/tile-yield';
 import worldTileYield from '@civ-clone/civ2-world/Rules/Tile/yield';
 import worldYieldModifier from '@civ-clone/civ2-world/Rules/Tile/yield-modifier';
 
@@ -145,6 +145,44 @@ describe('what a square gives its city', (): void => {
 
     expect(values).to.eql([...values].sort((a, b) => a - b));
     values.forEach((value, index) => expect(value).to.equal((index + 1) * 100));
+  });
+
+  it('knows every provider civ2-world’s square rules give after the road', async (): Promise<void> => {
+    // The square step takes out the railroad, government and pollution yields by provider. Any other provider civ2-world
+    //  gives must be a step before the road's end (terrain, special, irrigation, mine, river, road), or this fails.
+    const before = new Set([
+      'Irrigation',
+      'Mine',
+      'River',
+      'Road',
+      ...[Grassland, Hills, Plains, Ocean, Mountains, Forest, Glacier].map(
+        (Type) => Type.name
+      ),
+    ]);
+
+    for (const government of [Despotism, Monarchy, Republic]) {
+      const { player, square } = await setUp(government),
+        tiles = [
+          square(0, 0, Grassland, Irrigation, Road, Railroad, Pollution),
+          square(1, 0, Hills, Mine, Road, Railroad, Pollution),
+          square(2, 0, Plains, Irrigation, Road, Railroad),
+          square(3, 0, Ocean, Pollution),
+          square(4, 0, Mountains, Mine, Railroad, Pollution),
+        ];
+
+      tiles.forEach((tile) =>
+        tile
+          .yields(player)
+          .flatMap((tileYield) => tileYield.values())
+          .forEach(
+            ([, provider]) =>
+              expect(
+                before.has(provider) || laterSquareSteps.includes(provider),
+                provider
+              ).true
+          )
+      );
+    }
   });
 
   it('gives what the square gives alone, with no building, Wonder or celebration', async (): Promise<void> => {

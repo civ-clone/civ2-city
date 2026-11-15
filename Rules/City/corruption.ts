@@ -23,6 +23,9 @@ import {
 import { shieldWaste, tradeCorruption } from '../../lib/corruption';
 import City from '@civ-clone/core-city/City';
 import Cost from '@civ-clone/core-city/Rules/Cost';
+import Captured from '@civ-clone/core-city/Rules/Captured';
+import CityImprovementCreated from '@civ-clone/core-city-improvement/Rules/Created';
+import Destroyed from '@civ-clone/core-city/Rules/Destroyed';
 import Courthouse from '@civ-clone/base-city-improvement-courthouse/Courthouse';
 import Effect from '@civ-clone/core-rule/Effect';
 import { High } from '@civ-clone/core-rule/Priorities';
@@ -72,7 +75,14 @@ const buildingPalace = (
  */
 export const getRules = (
   dependencies: CorruptionDependencies = {}
-): (YieldRule | Cost | TerrainChanged)[] => {
+): (
+  | YieldRule
+  | Cost
+  | TerrainChanged
+  | CityImprovementCreated
+  | Captured
+  | Destroyed
+)[] => {
   const {
       cityBuildRegistry = cityBuildRegistryInstance,
       clientRegistry = clientRegistryInstance,
@@ -168,6 +178,20 @@ export const getRules = (
     new TerrainChanged(
       'civ2-city:capital-link/terrain-changed',
       new Effect((): void => capitalLink.invalidate())
+    ),
+
+    // A Palace built, or a city with one captured or destroyed, changes the turn's capitals and links.
+    new CityImprovementCreated(
+      'civ2-city:capital-link/city-improvement-created',
+      new Effect((): void => capitalLink.invalidateCapitals())
+    ),
+    new Captured(
+      'civ2-city:capital-link/captured',
+      new Effect((): void => capitalLink.invalidateCapitals())
+    ),
+    new Destroyed(
+      'civ2-city:capital-link/destroyed',
+      new Effect((): void => capitalLink.invalidateCapitals())
     ),
   ];
 };

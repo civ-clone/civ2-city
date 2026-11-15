@@ -5,6 +5,9 @@ import { GameDifficultyRegistry } from '@civ-clone/core-difficulty/GameDifficult
 import { PendingEffectRegistry } from '@civ-clone/core-pending-effect';
 import { PlayerGovernmentRegistry } from '@civ-clone/core-government/PlayerGovernmentRegistry';
 import Cost from '@civ-clone/core-city/Rules/Cost';
+import Captured from '@civ-clone/core-city/Rules/Captured';
+import CityImprovementCreated from '@civ-clone/core-city-improvement/Rules/Created';
+import Destroyed from '@civ-clone/core-city/Rules/Destroyed';
 import TerrainChanged from '@civ-clone/core-world/Rules/TerrainChanged';
 import YieldRule from '@civ-clone/core-city/Rules/Yield';
 export interface CorruptionDependencies extends CapitalLinkDependencies {
@@ -22,5 +25,12 @@ export interface CorruptionDependencies extends CapitalLinkDependencies {
  */
 export declare const getRules: (
   dependencies?: CorruptionDependencies
-) => (YieldRule | Cost | TerrainChanged)[];
+) => (
+  | YieldRule
+  | Cost
+  | TerrainChanged
+  | CityImprovementCreated
+  | Captured
+  | Destroyed
+)[];
 export default getRules;

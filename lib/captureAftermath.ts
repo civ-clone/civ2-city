@@ -81,6 +81,15 @@ import Tile from '@civ-clone/core-world/Tile';
 import Unit from '@civ-clone/core-unit/Unit';
 import { UnitRegistry } from '@civ-clone/core-unit/UnitRegistry';
 import Veteran from '@civ-clone/base-unit-improvement-veteran/UnitImprovements/Veteran';
+import {
+  PendingEffectRegistry,
+  instance as pendingEffectRegistryInstance,
+} from '@civ-clone/core-pending-effect';
+import {
+  Turn,
+  instance as turnInstance,
+} from '@civ-clone/core-turn-based-game/Turn';
+import { founderOf, recordCapture } from './founder';
 import { destroyUnits } from '@civ-clone/base-city-lifecycle/lib/destroyed';
 import { governmentOf } from './government';
 import { hasRole } from '@civ-clone/base-unit-role/roleOf';
@@ -101,6 +110,8 @@ export interface CaptureDependencies {
   tileImprovementRegistry?: TileImprovementRegistry;
   unitImprovementRegistry?: UnitImprovementRegistry;
   randomNumberGenerator?: () => number;
+  pendingEffectRegistry?: PendingEffectRegistry;
+  turn?: Turn;
   /** Civ2's `civs[].reputation` (higher is worse), which nothing models yet: 0, a clean record, unless given. */
   reputation?: (player: Player) => number;
   /** Whether `player` holds a vendetta against `against` (`TREATY_VENDETTA`), which nothing models yet: never, unless given. */
@@ -118,6 +129,8 @@ export const withCaptureDefaults = ({
   tileImprovementRegistry = tileImprovementRegistryInstance,
   unitImprovementRegistry = unitImprovementRegistryInstance,
   randomNumberGenerator = rngInstance,
+  pendingEffectRegistry = pendingEffectRegistryInstance,
+  turn = turnInstance,
   reputation = (): number => 0,
   vendetta = (): boolean => false,
 }: CaptureDependencies = {}): Required<CaptureDependencies> => ({
@@ -131,6 +144,8 @@ export const withCaptureDefaults = ({
   tileImprovementRegistry,
   unitImprovementRegistry,
   randomNumberGenerator,
+  pendingEffectRegistry,
+  turn,
   reputation,
   vendetta,
 });
@@ -148,7 +163,10 @@ const waitingBeforePlunder: WeakMap<City, Promise<unknown>[]> = new WeakMap();
  * Holds `city`'s plunder until `pending` settles: a choice the loser makes at the capture that spends its gold first,
  *  such as civ2-city-improvement's Palace escape (`city_capture_aftermath` :5462-5475 runs the escape before the
  *  plunder, which is capped to what's left). Call it from a `Captured` rule that runs before `plunderPriority`; the
- *  plunder takes every promise registered for the capture, and forgets them.
+ *  plunder waits for every promise registered for the capture to settle, and forgets them.
+ *
+ * Nothing of this is saved: a game saved while such a question is still open, and loaded again, never takes that
+ *  capture's plunder.
  */
 export const waitBeforePlunder = (
   city: City,
@@ -160,6 +178,7 @@ export const waitBeforePlunder = (
   ]);
 };
 export const partisansPriority = 2600;
+export const founderPriority = 2700;
 
 interface Snapshot {
   share: number;
@@ -188,10 +207,14 @@ export const captureRules = (
     tileImprovementRegistry,
     unitImprovementRegistry,
     randomNumberGenerator,
+    pendingEffectRegistry,
+    turn,
     reputation,
     vendetta,
   }: Required<CaptureDependencies>
 ): Captured[] => {
+  const dependencies = { pendingEffectRegistry, playerRegistry, turn };
+
   const goldOf = (player: Player): PlayerTreasury | null =>
       playerTreasuryRegistry
         .getByPlayer(player)
@@ -304,7 +327,8 @@ export const captureRules = (
           return;
         }
 
-        Promise.all(pending).then(take, take);
+        // Settled, not resolved: a rejected answer doesn't take the plunder before the others are in.
+        Promise.allSettled(pending).then(take);
       })
     ),
 
@@ -377,7 +401,8 @@ export const captureRules = (
       new Priority(partisansPriority),
       new Criterion(
         (city: City, captor: Player, loser: Player, cause: unknown): boolean =>
-          city.originalPlayer() !== captor && !(cause instanceof SubvertCity)
+          founderOf(city, loser, dependencies) !== captor &&
+          !(cause instanceof SubvertCity)
       ),
       new Effect(
         (city: City, captor: Player, loser: Player, cause: unknown): void => {
@@ -494,6 +519,20 @@ export const captureRules = (
           }
         }
       )
+    ),
+
+    // Last, the loser becomes the city's founder as Civ2 counts it (`cities[city].founder = civ2`, ~5538), for the next
+    //  capture's `was_founder` (`lib/founder`).
+    new Captured(
+      'civ2-city:city/captured/founder',
+      new Priority(founderPriority),
+      new Effect((city: City, captor: Player, loser: Player): void => {
+        if (city.destroyed()) {
+          return;
+        }
+
+        recordCapture(city, loser, dependencies);
+      })
     ),
   ];
 

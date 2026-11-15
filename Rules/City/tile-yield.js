@@ -64,10 +64,18 @@ const getRules = (tileImprovementRegistry = TileImprovementRegistry_1.instance, 
     // The square's own yields, up to its road (lines 2826–2888): without the railroad, government and pollution yields.
     new CityTileYield_1.default('civ2-city:city/tile-yield/square', (0, tileYieldPipeline_1.tileYieldPriority)('square'), new Effect_1.default((city, tile, yields) => {
         for (let index = yields.length - 1; index >= 0; index--) {
-            const [first] = yields[index].values();
-            if (first && exports.laterSquareSteps.includes(first[1])) {
-                yields.splice(index, 1);
+            const tileYield = yields[index], values = tileYield.values();
+            if (!values.some(([, provider]) => exports.laterSquareSteps.includes(provider))) {
+                continue;
             }
+            const kept = values.filter(([, provider]) => !exports.laterSquareSteps.includes(provider));
+            if (kept.length === 0) {
+                yields.splice(index, 1);
+                continue;
+            }
+            const [[value, provider], ...rest] = kept;
+            tileYield.set(value, provider);
+            rest.forEach(([value, provider]) => tileYield.add(value, provider));
         }
     })),
     // The city's own square counts as mined where its terrain has no irrigation bonus (lines 2863–2865: `TILE_CITY` and

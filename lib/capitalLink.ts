@@ -28,6 +28,10 @@ import {
   UnitRegistry,
   instance as unitRegistryInstance,
 } from '@civ-clone/core-unit/UnitRegistry';
+import {
+  Turn,
+  instance as turnInstance,
+} from '@civ-clone/core-turn-based-game/Turn';
 import Airport from '@civ-clone/base-city-improvement-airport/Airport';
 import City from '@civ-clone/core-city/City';
 import CityImprovement from '@civ-clone/core-city-improvement/CityImprovement';
@@ -104,6 +108,8 @@ export interface CapitalLinkDependencies {
   playerResearchRegistry?: PlayerResearchRegistry;
   tileImprovementRegistry?: TileImprovementRegistry;
   unitRegistry?: UnitRegistry;
+  /** The game's turn: Palaces and links are kept for the turn they were worked out in. */
+  turn?: Turn;
   /**
    * Whether `player` has an alliance with `other` (`TREATY_ALLIANCE`). Civ2 in civ-clone has no alliances yet, so by
    *  default no one has.
@@ -127,6 +133,10 @@ export type CapitalLinkResult = {
  *  it is flooded once per capital square (at most 47 × 47 squares) and kept until `invalidate()`, which civ2-city's
  *  `TerrainChanged` rule calls. Each link then walks at most 50 squares, asking each for its city, its units and its
  *  grade afresh, as units come and go. Land masses are looked up once per square, until `invalidate()`.
+ *
+ * Each player's Palaces are found once a turn, and each city's link is worked out once a turn (Civ2 works it out as the
+ *  city is processed, `city_calc_capital_link`), until `invalidateCapitals()`, which civ2-city's rules call when a city
+ *  improvement is built, a city is captured or destroyed, or a square's terrain changes.
  */
 export class CapitalLink {
   private _allied: (player: Player, other: Player) => boolean;
@@ -139,6 +149,14 @@ export class CapitalLink {
   private _playerResearchRegistry: PlayerResearchRegistry;
   private _routes: RouteNetwork;
   private _unitRegistry: UnitRegistry;
+  private _turn: Turn;
+  private _version = 0;
+  private _palaces: { key: string; byPlayer: Map<Player, City[]> } | null =
+    null;
+  private _links: WeakMap<
+    City,
+    { key: string; nearest: City | null; distance: number; link: Link }
+  > = new WeakMap();
 
   constructor({
     cityImprovementRegistry = cityImprovementRegistryInstance,
@@ -147,8 +165,10 @@ export class CapitalLink {
     playerResearchRegistry = playerResearchRegistryInstance,
     tileImprovementRegistry = tileImprovementRegistryInstance,
     unitRegistry = unitRegistryInstance,
+    turn = turnInstance,
     allied = () => false,
   }: CapitalLinkDependencies = {}) {
+    this._turn = turn;
     this._allied = allied;
     this._cityImprovementRegistry = cityImprovementRegistry;
     this._cityRegistry = cityRegistry;
@@ -168,6 +188,41 @@ export class CapitalLink {
   invalidate(): void {
     this._floods = new WeakMap();
     this._landMasses = new WeakMap();
+    this.invalidateCapitals();
+  }
+
+  /** Forget the turn's Palaces and links, after a Palace may have been built or lost. */
+  invalidateCapitals(): void {
+    this._version++;
+  }
+
+  private key(): string {
+    return `${this._turn.value()}:${this._version}`;
+  }
+
+  /** The cities with a standing Palace of each player, found once a turn. */
+  private palaces(player: Player): City[] {
+    const key = this.key();
+
+    if (this._palaces === null || this._palaces.key !== key) {
+      const byPlayer = new Map<Player, City[]>();
+
+      this._cityImprovementRegistry
+        .filter(
+          (improvement: CityImprovement): boolean =>
+            improvement instanceof Palace && !improvement.destroyed()
+        )
+        .forEach((palace: CityImprovement): void => {
+          const city = palace.city(),
+            owner = city.player();
+
+          byPlayer.set(owner, [...(byPlayer.get(owner) ?? []), city]);
+        });
+
+      this._palaces = { key, byPlayer };
+    }
+
+    return this._palaces.byPlayer.get(player) ?? [];
   }
 
   has(city: City, Improvement: typeof CityImprovement): boolean {
@@ -189,15 +244,12 @@ export class CapitalLink {
     let distance = this.has(city, Palace) ? 0 : noCapitalDistance,
       nearest: City | null = null;
 
-    for (const palace of this._cityImprovementRegistry.filter(
-      (improvement: CityImprovement): boolean =>
-        improvement instanceof Palace &&
-        !improvement.destroyed() &&
-        improvement.city() !== city &&
-        improvement.city().player() === player
-    )) {
-      const other = palace.city(),
-        otherDistance = diagonalDistance(city.tile(), other.tile());
+    for (const other of this.palaces(player)) {
+      if (other === city) {
+        continue;
+      }
+
+      const otherDistance = diagonalDistance(city.tile(), other.tile());
 
       if (otherDistance < distance || nearest === null) {
         nearest = other;
@@ -217,7 +269,18 @@ export class CapitalLink {
     capital: Omit<CapitalLinkResult, 'link'> = this.capital(city)
   ): CapitalLinkResult {
     const player = city.player(),
-      { distance, nearest } = capital;
+      { distance, nearest } = capital,
+      key = this.key(),
+      cached = this._links.get(city);
+
+    if (
+      cached !== undefined &&
+      cached.key === key &&
+      cached.nearest === nearest &&
+      cached.distance === distance
+    ) {
+      return { distance, nearest, link: cached.link };
+    }
 
     let link: Link =
       distance === 0 ? (this.knowsRailroad(player) ? RAILROAD : ROAD) : NONE;
@@ -234,6 +297,8 @@ export class CapitalLink {
         link = this.connection(player, city.tile(), nearestCity.tile());
       }
     }
+
+    this._links.set(city, { key, nearest, distance, link });
 
     return { distance, nearest, link };
   }

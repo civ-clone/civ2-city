@@ -55,9 +55,15 @@ const getRules = (clientRegistry = ClientRegistry_1.instance, gameDifficultyRegi
     //  ~2838), and so is anyone's after a Wonder or a spaceship part, which are announced to all.
     new BuildOverflow_1.default('civ2-city:city/build-overflow/computer-players', new Criterion_1.default((cityBuild) => !(0, isHuman_1.default)(cityBuild.city().player(), clientRegistry)), new Criterion_1.default((cityBuild, item) => (0, exports.categoryOf)(item) !== exports.WONDER), new Effect_1.default((cityBuild, item, progress, cost) => Math.max(progress - cost, 0))),
     // `city_set_production` (city.cpp ~1488) only asks `city_shields_after_change` for a person's change outside the turn's
-    //  processing; a computer player's changes cost nothing.
+    //  processing.
     new ProductionChanged_1.default('civ2-city:city/production-changed/change-penalty', new Criterion_1.default((cityBuild) => (0, isHuman_1.default)(cityBuild.city().player(), clientRegistry)), new Criterion_1.default(() => (0, level_1.levelOf)(gameDifficultyRegistry) !== 0), new Criterion_1.default((cityBuild, from, to) => from !== null &&
         (0, buildCategory_1.default)(from, ruleRegistry) !== (0, buildCategory_1.default)(to, ruleRegistry)), new Effect_1.default((cityBuild, from, to, progress) => (0, exports.shieldsAfterChange)(progress))),
+    // A computer player's change from anything but a Wonder to a Wonder halves the box, rounded down, on every level
+    //  (`city_set_production`, city.cpp ~1512-1514: `building < -0x26` and `-IMP_FIRST_WONDER < old_building`; Capitalization
+    //  and the spaceship parts count as "anything but a Wonder" here). It includes the shields a finished unit or
+    //  improvement carried over, as the computer player chooses its next build after the completion. Asked, as every
+    //  change is, from where the turn started, so unlike the original, changing back the same turn restores the box.
+    new ProductionChanged_1.default('civ2-city:city/production-changed/computer-player-wonder', new Criterion_1.default((cityBuild) => !(0, isHuman_1.default)(cityBuild.city().player(), clientRegistry)), new Criterion_1.default((cityBuild, from, to) => from !== null && !isA(from, Wonder_1.default) && isA(to, Wonder_1.default)), new Effect_1.default((cityBuild, from, to, progress) => Math.trunc(progress / 2))),
 ];
 exports.getRules = getRules;
 exports.default = exports.getRules;

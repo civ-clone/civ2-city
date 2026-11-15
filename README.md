@@ -28,7 +28,8 @@ effective @COSMIC values; the tables by government are civ2-government's, and th
 - **Production** (`Rules/City/build`, `process-yield`): Civ2's categories are units, improvements, and everything
   numbered past the Solar Plant (spaceship parts, Capitalization and Wonders). A person who changes to another category
   loses half the box, rounded down (@COSMIC's change penalty), counted from where the turn started, so changing back
-  restores it; never on Chieftain, never for a computer player. A computer player's finished unit or improvement keeps
+  restores it; never on Chieftain. A computer player instead loses half its box, on any level, when it changes from
+  anything but a Wonder to a Wonder (shields carried over included). A computer player's finished unit or improvement keeps
   what was over its cost; a person's box, and anyone's after a Wonder, starts again from 0. While a city builds
   Capitalization its shields, after waste and support, go straight into the treasury (none in disorder or Anarchy) and
   the box stays as it was; it isn't announced as waiting.
@@ -49,10 +50,12 @@ effective @COSMIC values; the tables by government are civ2-government's, and th
   then in Civ2's direction order): 2 if every square stepped on has a railroad, 1 if each has a road, 0 at the first
   without one, after more than 50 squares, or at another player's city or unit (a barbarian's unit doesn't block). It
   stops early, linked, at any city of the player's own. On another land mass, an airport at each end gives 1. The cost
-  grid is kept per capital square until a square's terrain changes; the walk itself is fresh each time.
+  grid is kept per capital square until a square's terrain changes; each player's Palaces and each city's link are
+  worked out once a turn, and again when an improvement is built or a city is captured or destroyed.
 - **Capture** (`Rules/City/captured`, `lib/captureAftermath`, numbers in `lib/capture`): the box is emptied, Auto
   turned off and the item kept; the city loses a citizen, unless it was incited or retaken by its founder and has
-  only one.
+  only one. The founder is Civ2's (`lib/founder`): the loser of the city's last capture, or its owner once 63 turns
+  have passed since, or the player who founded it if it was never taken; kept in the save as a pending effect.
   - **Plunder:** the captor takes size × the loser's gold / (the loser's citizens in all its cities + 1), from before
     the capture, clamped to the gold the loser has left after a Palace escape; Barbarians take it but keep none.
     Emits `city:plundered` (city, captor, loser, amount).
@@ -84,8 +87,7 @@ effective @COSMIC values; the tables by government are civ2-government's, and th
 - **Corruption and waste:** no alliances in civ2 yet, so every other player's city and unit blocks the capital link
   (`CapitalLink`'s `allied` option). Land masses are the world's as built: Civ2 recounts them when terrain changes. On a
   hexagonal grid there's no logical square axis, so the distance is the rounded straight line and no road links.
-- **Capture:** the city's founder is its original player (Civ2 records the last owner before each capture); no civil
-  war. Power ranks are taken as the capture starts, not at the start of the turn, and reputation and vendettas
+- **Capture:** no civil war. Power ranks are taken as the capture starts, not at the start of the turn, and reputation and vendettas
   aren't modelled, so Partisans are never veterans unless a ruleset passes `reputation`/`vendetta`. Not yet: a
   person's captured city starting in disorder under a Republic or Democracy, the captor's new build (Settlers for a
   computer player, the best defender when the item can't be built), the size-1 city a computer player may keep whole,

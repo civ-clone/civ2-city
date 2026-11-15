@@ -411,7 +411,7 @@ describe('city:captured order', (): void => {
 
     expect(ids[0]).equal('plunder-share');
     expect(ids.indexOf('shrink')).lessThan(ids.indexOf('rehome-units'));
-    expect(ids.slice(-2)).eql(['plunder', 'partisans']);
+    expect(ids.slice(-3)).eql(['plunder', 'partisans', 'founder']);
   });
 });
 

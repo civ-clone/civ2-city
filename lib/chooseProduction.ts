@@ -185,7 +185,16 @@ export const clamp = (value: number, low: number, high: number): number =>
 /** C's `/` on `int`s: towards 0. */
 export const div = (a: number, b: number): number => Math.trunc(a / b);
 
-/** `unrest_state`: 2 in disorder, 1 with as many happy citizens as unhappy ones (none of either included), else 0. */
+/**
+ * `unrest_state`: 2 in disorder, 1 with as many happy citizens as unhappy ones (none of either included), else 0.
+ *
+ * The original (`city_choose_production`, city_production.cpp ~2176) also gives 2 to a city flagged both
+ *  `CITYF_ON_EDGE` and `CITYF_AI_SPECIALIST_HELD`. That second flag is only ever set for a computer player's city
+ *  (`city_assign_workers`, city.cpp ~3056 and ~3160, both under `human_players == 0`), and cleared for any city with no
+ *  specialists; Auto is a person's (`CITYF_AUTOBUILD` is only acted on for human players, city_production.cpp ~3141), and
+ *  these scores are only asked for a city on Auto, so the case never applies here. A computer player that adopts the
+ *  scores (stage N) has to supply it.
+ */
 export const unrestState = (s: ChooseProductionState): number =>
   s.disorder ? 2 : s.happy === s.unhappy ? 1 : 0;
 

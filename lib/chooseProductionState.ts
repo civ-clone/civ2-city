@@ -99,6 +99,7 @@ import Barracks from '@civ-clone/base-city-improvement-barracks/Barracks';
 import Battleship from '@civ-clone/base-unit-battleship/Battleship';
 import Bomber from '@civ-clone/base-unit-bomber/Bomber';
 import City from '@civ-clone/core-city/City';
+import { founderOf } from './founder';
 import CityImprovement from '@civ-clone/core-city-improvement/CityImprovement';
 import {
   CitizenState,
@@ -380,15 +381,16 @@ export const chooseProductionState = (
     attack = attackOf(player),
     // A human player's cities taken from the player on this land mass, more than the leader's attack + 1, threaten it
     //  whatever the policy.
-    lostCities = cityRegistry
-      .entries()
-      .filter(
-        (other: City): boolean =>
-          other.originalPlayer() === player &&
-          other.player() !== player &&
-          onLandMass(other) &&
-          isHuman(other.player(), clientRegistry)
-      ).length,
+    lostCities = cityRegistry.entries().filter(
+      (other: City): boolean =>
+        founderOf(other, other.player(), {
+          pendingEffectRegistry,
+          playerRegistry,
+        }) === player &&
+        other.player() !== player &&
+        onLandMass(other) &&
+        isHuman(other.player(), clientRegistry)
+    ).length,
     { happy, unhappy } = citizens(city, yields),
     best = bestHuman(player),
     ports = ownCities.filter((other: City): boolean =>

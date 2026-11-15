@@ -10,6 +10,9 @@ const core_pending_effect_1 = require("@civ-clone/core-pending-effect");
 const PlayerGovernmentRegistry_1 = require("@civ-clone/core-government/PlayerGovernmentRegistry");
 const corruption_1 = require("../../lib/corruption");
 const Cost_1 = require("@civ-clone/core-city/Rules/Cost");
+const Captured_1 = require("@civ-clone/core-city/Rules/Captured");
+const Created_1 = require("@civ-clone/core-city-improvement/Rules/Created");
+const Destroyed_1 = require("@civ-clone/core-city/Rules/Destroyed");
 const Courthouse_1 = require("@civ-clone/base-city-improvement-courthouse/Courthouse");
 const Effect_1 = require("@civ-clone/core-rule/Effect");
 const Priorities_1 = require("@civ-clone/core-rule/Priorities");
@@ -89,6 +92,10 @@ const getRules = (dependencies = {}) => {
         })),
         // The capital link's cost grids follow the land.
         new TerrainChanged_1.default('civ2-city:capital-link/terrain-changed', new Effect_1.default(() => capitalLink.invalidate())),
+        // A Palace built, or a city with one captured or destroyed, changes the turn's capitals and links.
+        new Created_1.default('civ2-city:capital-link/city-improvement-created', new Effect_1.default(() => capitalLink.invalidateCapitals())),
+        new Captured_1.default('civ2-city:capital-link/captured', new Effect_1.default(() => capitalLink.invalidateCapitals())),
+        new Destroyed_1.default('civ2-city:capital-link/destroyed', new Effect_1.default(() => capitalLink.invalidateCapitals())),
     ];
 };
 exports.getRules = getRules;

@@ -44,7 +44,12 @@ describe('CapitalLink', (): void => {
       topologyId = 'square',
     }: { railroadKnown?: boolean; allied?: boolean; topologyId?: string } = {}
   ) => {
-    const ruleRegistry = new RuleRegistry(),
+    // Each `link.of` in these tests asks about the squares as they are then: a turn of its own (`nextTurn`).
+    const turnValue = { value: 1 },
+      nextTurn = (): void => {
+        turnValue.value++;
+      },
+      ruleRegistry = new RuleRegistry(),
       landMassRegistry = new LandMassRegistry(),
       cityRegistry = new CityRegistry(),
       cityImprovementRegistry = new CityImprovementRegistry(),
@@ -71,6 +76,7 @@ describe('CapitalLink', (): void => {
             units.filter((unit) => unit.tile() === tile),
         } as any,
         allied: () => allied,
+        turn: { value: () => turnValue.value } as any,
       }),
       city = (x: number, y: number, owner: Player = player): City => {
         const built = new City(owner, world.get(x, y), 'city', ruleRegistry);
@@ -108,12 +114,23 @@ describe('CapitalLink', (): void => {
       range = (from: number, to: number): number[] =>
         new Array(to - from + 1).fill(0).map((_, i) => from + i);
 
+    const of = link.of.bind(link);
+
+    // Every expectation below changes the squares first; as Civ2 works the link out once a turn, each is a new turn.
+    link.of = (...args: Parameters<CapitalLink['of']>) => {
+      nextTurn();
+
+      return of(...args);
+    };
+
     return {
       world,
       player,
       rival,
       barbarian,
       link,
+      of,
+      nextTurn,
       city,
       improve,
       road,
@@ -122,6 +139,40 @@ describe('CapitalLink', (): void => {
       range,
     };
   };
+
+  describe('within a turn', (): void => {
+    it('keeps each city’s link and each player’s Palaces until the next turn or `invalidateCapitals()`', async (): Promise<void> => {
+      const { city, improve, link, of, road, railroad, nextTurn, range } =
+          await setUp(),
+        capital = city(2, 5),
+        other = city(8, 5);
+
+      improve(capital, Palace);
+      road(5, ...range(3, 7));
+
+      expect(of(other).link).equal(1);
+
+      // A railroad built during the turn counts from the next.
+      railroad(5, ...range(2, 8));
+
+      expect(of(other).link).equal(1);
+
+      nextTurn();
+
+      expect(of(other).link).equal(2);
+
+      // A new Palace counts at once (civ2-city calls `invalidateCapitals()` when an improvement is built).
+      const nearer = city(6, 5);
+
+      improve(nearer, Palace);
+
+      expect(of(other).distance).equal(6);
+
+      link.invalidateCapitals();
+
+      expect(of(other).distance).equal(2);
+    });
+  });
 
   describe('distances', (): void => {
     it('measures map_distance_diag as the longer gap plus half the shorter, and map_distance as the longer', async (): Promise<void> => {

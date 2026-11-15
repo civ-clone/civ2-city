@@ -84,6 +84,8 @@ export const register = (game: Game): void => {
         tileImprovementRegistry: game.tileImprovements,
         unitImprovementRegistry: game.unitImprovements,
         randomNumberGenerator: game.rng,
+        pendingEffectRegistry: game.pendingEffects,
+        turn: game.turn,
       }
     ),
     ...cityCorruption({
@@ -97,6 +99,7 @@ export const register = (game: Game): void => {
       playerGovernmentRegistry: game.playerGovernments,
       playerResearchRegistry: game.playerResearch,
       tileImprovementRegistry: game.tileImprovements,
+      turn: game.turn,
       unitRegistry: game.units,
     }),
     ...cityCost(

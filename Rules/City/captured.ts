@@ -41,6 +41,7 @@ import {
   captureRules,
   withCaptureDefaults,
 } from '../../lib/captureAftermath';
+import { founderOf } from '../../lib/founder';
 import { keepCapturedBuild } from '@civ-clone/base-city-lifecycle/lib/captured';
 import { reassignWorkers } from '@civ-clone/base-city-lifecycle/lib/assignWorkers';
 
@@ -88,7 +89,7 @@ export const getRules: (
       keepCapturedBuild(cityBuildRegistry.getByCity(capturedCity))
     )
   ),
-  // A city conquered from another than its founder loses a citizen, so one of size 1 is destroyed; one taken by a
+  // A city conquered from another than its founder (as Civ2 counts it: `lib/founder`) loses a citizen, so one of size 1 is destroyed; one taken by a
   //  Diplomat or Spy, or retaken by its founder, loses one only when it has one to spare (`city_capture_aftermath`).
   new Captured(
     'civ2-city:city/captured/shrink',
@@ -101,7 +102,8 @@ export const getRules: (
       ): boolean =>
         cityGrowthRegistry.getByCity(capturedCity).size() > 1 ||
         (!(cause instanceof InciteRevolt) &&
-          capturedCity.originalPlayer() !== capturingPlayer)
+          founderOf(capturedCity, player, withCaptureDefaults(capture)) !==
+            capturingPlayer)
     ),
     new Effect((capturedCity: City): void =>
       cityGrowthRegistry.getByCity(capturedCity).shrink(Captured)

@@ -105,7 +105,7 @@ export const getRules: (
   ),
 
   // `city_set_production` (city.cpp ~1488) only asks `city_shields_after_change` for a person's change outside the turn's
-  //  processing; a computer player's changes cost nothing.
+  //  processing.
   new ProductionChanged(
     'civ2-city:city/production-changed/change-penalty',
     new Criterion((cityBuild: CityBuild): boolean =>
@@ -124,6 +124,31 @@ export const getRules: (
         to: Buildable,
         progress: number
       ): number => shieldsAfterChange(progress)
+    )
+  ),
+
+  // A computer player's change from anything but a Wonder to a Wonder halves the box, rounded down, on every level
+  //  (`city_set_production`, city.cpp ~1512-1514: `building < -0x26` and `-IMP_FIRST_WONDER < old_building`; Capitalization
+  //  and the spaceship parts count as "anything but a Wonder" here). It includes the shields a finished unit or
+  //  improvement carried over, as the computer player chooses its next build after the completion. Asked, as every
+  //  change is, from where the turn started, so unlike the original, changing back the same turn restores the box.
+  new ProductionChanged(
+    'civ2-city:city/production-changed/computer-player-wonder',
+    new Criterion(
+      (cityBuild: CityBuild): boolean =>
+        !isHuman(cityBuild.city().player(), clientRegistry)
+    ),
+    new Criterion(
+      (cityBuild: CityBuild, from: Buildable | null, to: Buildable): boolean =>
+        from !== null && !isA(from, Wonder) && isA(to, Wonder)
+    ),
+    new Effect(
+      (
+        cityBuild: CityBuild,
+        from: Buildable | null,
+        to: Buildable,
+        progress: number
+      ): number => Math.trunc(progress / 2)
     )
   ),
 ];

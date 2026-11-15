@@ -13,6 +13,8 @@ import { CityGrowthRegistry } from '@civ-clone/core-city-growth/CityGrowthRegist
 import { Engine } from '@civ-clone/core-engine/Engine';
 import Player from '@civ-clone/core-player/Player';
 import { UnitRegistry } from '@civ-clone/core-unit/UnitRegistry';
+import { PendingEffectRegistry } from '@civ-clone/core-pending-effect';
+import { Turn } from '@civ-clone/core-turn-based-game/Turn';
 export interface CaptureDependencies {
   cityRegistry?: CityRegistry;
   clientRegistry?: ClientRegistry;
@@ -24,6 +26,8 @@ export interface CaptureDependencies {
   tileImprovementRegistry?: TileImprovementRegistry;
   unitImprovementRegistry?: UnitImprovementRegistry;
   randomNumberGenerator?: () => number;
+  pendingEffectRegistry?: PendingEffectRegistry;
+  turn?: Turn;
   /** Civ2's `civs[].reputation` (higher is worse), which nothing models yet: 0, a clean record, unless given. */
   reputation?: (player: Player) => number;
   /** Whether `player` holds a vendetta against `against` (`TREATY_VENDETTA`), which nothing models yet: never, unless given. */
@@ -40,6 +44,8 @@ export declare const withCaptureDefaults: ({
   tileImprovementRegistry,
   unitImprovementRegistry,
   randomNumberGenerator,
+  pendingEffectRegistry,
+  turn,
   reputation,
   vendetta,
 }?: CaptureDependencies) => Required<CaptureDependencies>;
@@ -53,13 +59,17 @@ export declare const plunderPriority = 2500;
  * Holds `city`'s plunder until `pending` settles: a choice the loser makes at the capture that spends its gold first,
  *  such as civ2-city-improvement's Palace escape (`city_capture_aftermath` :5462-5475 runs the escape before the
  *  plunder, which is capped to what's left). Call it from a `Captured` rule that runs before `plunderPriority`; the
- *  plunder takes every promise registered for the capture, and forgets them.
+ *  plunder waits for every promise registered for the capture to settle, and forgets them.
+ *
+ * Nothing of this is saved: a game saved while such a question is still open, and loaded again, never takes that
+ *  capture's plunder.
  */
 export declare const waitBeforePlunder: (
   city: City,
   pending: Promise<unknown>
 ) => void;
 export declare const partisansPriority = 2600;
+export declare const founderPriority = 2700;
 /**
  * Plunder, the units the city supported, and Partisans: OpenCiv2 `src/auto/city.cpp` `city_capture_aftermath`
  *  (0057b5df) and its `_announce`, `_rehome_units` and `_partisans` parts (richardpenman/civ2@49f26ec).
@@ -79,6 +89,8 @@ export declare const captureRules: (
     tileImprovementRegistry,
     unitImprovementRegistry,
     randomNumberGenerator,
+    pendingEffectRegistry,
+    turn,
     reputation,
     vendetta,
   }: Required<CaptureDependencies>

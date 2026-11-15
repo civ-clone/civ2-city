@@ -123,11 +123,29 @@ export const getRules: (
     tileYieldPriority('square'),
     new Effect((city: City, tile: Tile, yields: Yield[]): void => {
       for (let index = yields.length - 1; index >= 0; index--) {
-        const [first] = yields[index].values();
+        const tileYield = yields[index],
+          values = tileYield.values();
 
-        if (first && laterSquareSteps.includes(first[1])) {
-          yields.splice(index, 1);
+        if (
+          !values.some(([, provider]) => laterSquareSteps.includes(provider))
+        ) {
+          continue;
         }
+
+        const kept = values.filter(
+          ([, provider]) => !laterSquareSteps.includes(provider)
+        );
+
+        if (kept.length === 0) {
+          yields.splice(index, 1);
+
+          continue;
+        }
+
+        const [[value, provider], ...rest] = kept;
+
+        tileYield.set(value, provider);
+        rest.forEach(([value, provider]) => tileYield.add(value, provider));
       }
     })
   ),
