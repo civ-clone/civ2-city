@@ -15,15 +15,20 @@ const Priority_1 = require("@civ-clone/core-rule/Priority");
 const Yield_1 = require("@civ-clone/core-city/Rules/Yield");
 const getRules = (cityImprovementRegistry = CityImprovementRegistry_1.instance, playerGovernmentRegistry = PlayerGovernmentRegistry_1.instance, specialistRegistry = SpecialistRegistry_1.instance, gameDifficultyRegistry = GameDifficultyRegistry_1.instance, clientRegistry = ClientRegistry_1.instance) => [
     new Yield_1.default('civ2-city:city/yield/worked-tiles', new Priority_1.default(0), // X High
-    new Effect_1.default((city) => city
-        .tilesWorked()
-        .entries()
-        .flatMap((tile) => tile.yields(city.player()).flatMap((tileYield) => new tileYield.constructor(tileYield.value(), tile.id() +
-        ': ' +
-        tileYield
-            .values()
-            .map(([, provider]) => provider)
-            .join('-')))))),
+    // What each square gives this city goes through its `CityTileYield` rules (`Rules/City/tile-yield`, in the order
+    //  of `lib/tileYieldPipeline`), fetched once for all its squares.
+    new Effect_1.default((city) => {
+        const rules = city.tileYieldRules();
+        return city
+            .tilesWorked()
+            .entries()
+            .flatMap((tile) => city.tileYields(tile, rules).flatMap((tileYield) => new tileYield.constructor(tileYield.value(), tile.id() +
+            ': ' +
+            tileYield
+                .values()
+                .map(([, provider]) => provider)
+                .join('-'))));
+    })),
     // Each specialist's yield, before improvements (`data/cityRules`).
     ...[
         [Specialists_1.Entertainer, Yields_1.Luxuries, cityRules_1.entertainerLuxuries],

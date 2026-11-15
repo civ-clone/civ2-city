@@ -6,7 +6,7 @@ import {
   CityImprovementRegistry,
   instance as cityImprovementRegistryInstance,
 } from '@civ-clone/core-city-improvement/CityImprovementRegistry';
-import { Corruption, Gold, Luxuries, Research, Trade } from '../../Yields';
+import { Gold, Luxuries, Research } from '../../Yields';
 import { Entertainer, Scientist, TaxCollector } from '../../Specialists';
 import {
   GameDifficultyRegistry,
@@ -28,17 +28,10 @@ import {
 import City from '@civ-clone/core-city/City';
 import Criterion from '@civ-clone/core-rule/Criterion';
 import Effect from '@civ-clone/core-rule/Effect';
-import { High } from '@civ-clone/core-rule/Priorities';
-import Palace from '@civ-clone/base-city-improvement-palace/Palace';
 import Priority from '@civ-clone/core-rule/Priority';
 import Specialist from '@civ-clone/core-city/Specialist';
 import Yield from '@civ-clone/core-yield/Yield';
 import YieldRule from '@civ-clone/core-city/Rules/Yield';
-import governmentOf from '../../lib/government';
-import isHuman from '@civ-clone/civ2-difficulty/isHuman';
-import { levelOf } from '@civ-clone/civ2-difficulty/level';
-import { reduceYield } from '@civ-clone/core-yield/lib/reduceYields';
-import tradeCorruption from '../../lib/corruption';
 
 export const getRules: (
   cityImprovementRegistry?: CityImprovementRegistry,
@@ -56,12 +49,16 @@ export const getRules: (
   new YieldRule(
     'civ2-city:city/yield/worked-tiles',
     new Priority(0), // X High
-    new Effect((city: City) =>
-      city
+    // What each square gives this city goes through its `CityTileYield` rules (`Rules/City/tile-yield`, in the order
+    //  of `lib/tileYieldPipeline`), fetched once for all its squares.
+    new Effect((city: City) => {
+      const rules = city.tileYieldRules();
+
+      return city
         .tilesWorked()
         .entries()
         .flatMap((tile) =>
-          tile.yields(city.player()).flatMap(
+          city.tileYields(tile, rules).flatMap(
             (tileYield: Yield) =>
               new (tileYield.constructor as typeof Yield)(
                 tileYield.value(),
@@ -73,8 +70,8 @@ export const getRules: (
                     .join('-')
               )
           )
-        )
-    )
+        );
+    })
   ),
 
   // Each specialist's yield, before improvements (`data/cityRules`).
