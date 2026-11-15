@@ -7,7 +7,7 @@ import CityBuild from '@civ-clone/core-city-build/CityBuild';
 import Effect from '@civ-clone/core-rule/Effect';
 import { emitBuildingComplete } from '@civ-clone/base-city-lifecycle/lib/events';
 
-// Auto (a city choosing its own next build) isn't here yet (civ2-city's README).
+// Auto (a city choosing its own next build) is `Rules/City/auto-build`'s, registered after this.
 export const getRules: (engine?: Engine) => BuildingComplete[] = (
   engine: Engine = engineInstance
 ): BuildingComplete[] => [

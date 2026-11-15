@@ -2,6 +2,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.register = void 0;
 const core_game_1 = require("@civ-clone/core-game");
+const auto_build_1 = require("./Rules/City/auto-build");
+const build_priority_1 = require("./Rules/City/build-priority");
 const building_complete_1 = require("./Rules/City/building-complete");
 const building_held_1 = require("./Rules/City/building-held");
 const can_be_worked_1 = require("./Rules/City/can-be-worked");
@@ -31,7 +33,31 @@ const moved_1 = require("./Rules/Unit/moved");
 const unsupported_1 = require("./Rules/Unit/unsupported");
 const register = (game) => {
     (0, registerAvailableSpecialists_1.default)(game.availableSpecialists);
-    game.rules.register(...(0, building_complete_1.default)(game.engine), ...(0, building_held_1.default)(game.engine), ...(0, can_be_worked_1.default)(game.cities, game.units, game.workedTiles), ...(0, captured_1.default)(game.units, game.cityGrowth, game.cityBuilds, game.engine, game.playerWorlds, game.workedTiles, game.specialists, game.availableSpecialists, {
+    game.rules.register(...(0, building_complete_1.default)(game.engine), ...(0, building_held_1.default)(game.engine), ...(0, auto_build_1.default)({
+        cityBuildRegistry: game.cityBuilds,
+        cityRegistry: game.cities,
+        pendingEffectRegistry: game.pendingEffects,
+        ruleRegistry: game.rules,
+    }), ...(0, build_priority_1.default)({
+        cityBuildRegistry: game.cityBuilds,
+        cityGrowthRegistry: game.cityGrowth,
+        cityImprovementRegistry: game.cityImprovements,
+        cityRegistry: game.cities,
+        clientRegistry: game.clients,
+        gameDifficultyRegistry: game.difficulty,
+        interactionRegistry: game.interactions,
+        landMassRegistry: game.landMasses,
+        pendingEffectRegistry: game.pendingEffects,
+        playerGovernmentRegistry: game.playerGovernments,
+        playerRegistry: game.players,
+        playerResearchRegistry: game.playerResearch,
+        playerTradeRatesRegistry: game.playerTradeRates,
+        ruleRegistry: game.rules,
+        specialistRegistry: game.specialists,
+        tileImprovementRegistry: game.tileImprovements,
+        unitRegistry: game.units,
+        wonderRegistry: game.wonders,
+    }), ...(0, can_be_worked_1.default)(game.cities, game.units, game.workedTiles), ...(0, captured_1.default)(game.units, game.cityGrowth, game.cityBuilds, game.engine, game.playerWorlds, game.workedTiles, game.specialists, game.availableSpecialists, {
         cityRegistry: game.cities,
         clientRegistry: game.clients,
         playerGovernmentRegistry: game.playerGovernments,

@@ -1,4 +1,6 @@
 import { Game, defaultGame } from '@civ-clone/core-game';
+import cityAutoBuild from './Rules/City/auto-build';
+import cityBuildPriority from './Rules/City/build-priority';
 import cityBuildingComplete from './Rules/City/building-complete';
 import cityBuildingHeld from './Rules/City/building-held';
 import cityCanBeWorked from './Rules/City/can-be-worked';
@@ -33,6 +35,32 @@ export const register = (game: Game): void => {
   game.rules.register(
     ...cityBuildingComplete(game.engine),
     ...cityBuildingHeld(game.engine),
+    ...cityAutoBuild({
+      cityBuildRegistry: game.cityBuilds,
+      cityRegistry: game.cities,
+      pendingEffectRegistry: game.pendingEffects,
+      ruleRegistry: game.rules,
+    }),
+    ...cityBuildPriority({
+      cityBuildRegistry: game.cityBuilds,
+      cityGrowthRegistry: game.cityGrowth,
+      cityImprovementRegistry: game.cityImprovements,
+      cityRegistry: game.cities,
+      clientRegistry: game.clients,
+      gameDifficultyRegistry: game.difficulty,
+      interactionRegistry: game.interactions,
+      landMassRegistry: game.landMasses,
+      pendingEffectRegistry: game.pendingEffects,
+      playerGovernmentRegistry: game.playerGovernments,
+      playerRegistry: game.players,
+      playerResearchRegistry: game.playerResearch,
+      playerTradeRatesRegistry: game.playerTradeRates,
+      ruleRegistry: game.rules,
+      specialistRegistry: game.specialists,
+      tileImprovementRegistry: game.tileImprovements,
+      unitRegistry: game.units,
+      wonderRegistry: game.wonders,
+    }),
     ...cityCanBeWorked(game.cities, game.units, game.workedTiles),
     ...cityCaptured(
       game.units,
