@@ -5,7 +5,9 @@ import {
 import { IBuildable as Buildable } from '@civ-clone/core-city-build/Buildable';
 import BuildingHeld from '@civ-clone/core-city-build/Rules/BuildingHeld';
 import CityBuild from '@civ-clone/core-city-build/CityBuild';
+import Criterion from '@civ-clone/core-rule/Criterion';
 import Effect from '@civ-clone/core-rule/Effect';
+import { isBuildingCapitalization } from '@civ-clone/base-city-improvement-capitalization/lib/capitalizationRules';
 import { emitBuildingHeld } from '@civ-clone/base-city-lifecycle/lib/events';
 
 export const getRules: (engine?: Engine) => BuildingHeld[] = (
@@ -15,6 +17,10 @@ export const getRules: (engine?: Engine) => BuildingHeld[] = (
   //  the rules holding it, for a client to word, and to tell its player of once (civ-clone/web-renderer#970).
   new BuildingHeld(
     'civ2-city:city/building-held/emit',
+    // Capitalization is always held, by design: it isn't waiting for anything (plan §10).
+    new Criterion(
+      (cityBuild: CityBuild): boolean => !isBuildingCapitalization(cityBuild)
+    ),
     new Effect(
       (
         cityBuild: CityBuild,

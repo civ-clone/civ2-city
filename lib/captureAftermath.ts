@@ -141,6 +141,24 @@ export const withCaptureDefaults = ({
  *  Workshop, which comes last in `city_capture_aftermath`. Plunder, then Partisans, as the original runs them.
  */
 export const plunderPriority = 2500;
+
+const waitingBeforePlunder: WeakMap<City, Promise<unknown>[]> = new WeakMap();
+
+/**
+ * Holds `city`'s plunder until `pending` settles: a choice the loser makes at the capture that spends its gold first,
+ *  such as civ2-city-improvement's Palace escape (`city_capture_aftermath` :5462-5475 runs the escape before the
+ *  plunder, which is capped to what's left). Call it from a `Captured` rule that runs before `plunderPriority`; the
+ *  plunder takes every promise registered for the capture, and forgets them.
+ */
+export const waitBeforePlunder = (
+  city: City,
+  pending: Promise<unknown>
+): void => {
+  waitingBeforePlunder.set(city, [
+    ...(waitingBeforePlunder.get(city) ?? []),
+    pending,
+  ]);
+};
 export const partisansPriority = 2600;
 
 interface Snapshot {
@@ -249,24 +267,44 @@ export const captureRules = (
       'civ2-city:city/captured/plunder',
       new Priority(plunderPriority),
       new Effect((city: City, captor: Player, loser: Player): void => {
-        const snapshot = snapshots.get(city),
-          loserGold = goldOf(loser);
+        const snapshot = snapshots.get(city);
 
-        if (!snapshot || loserGold === null) {
+        if (!snapshot) {
           return;
         }
 
-        const amount = plunder(snapshot.share, loserGold.value());
+        // The loser's gold is read when the plunder is taken, so a Palace escape a person has yet to answer (civ2-city-
+        //  improvement, `waitBeforePlunder`) is paid for first, as `city_capture_aftermath` (:5462-5475) does.
+        const take = (): void => {
+            const loserGold = goldOf(loser);
 
-        loserGold.subtract(amount);
+            if (loserGold === null) {
+              return;
+            }
 
-        if (!isBarbarian(captor)) {
-          goldOf(captor)?.add(amount);
+            const amount = plunder(snapshot.share, loserGold.value());
+
+            loserGold.subtract(amount);
+
+            if (!isBarbarian(captor)) {
+              goldOf(captor)?.add(amount);
+            }
+
+            if (amount !== 0) {
+              engine.emit('city:plundered', city, captor, loser, amount);
+            }
+          },
+          pending = waitingBeforePlunder.get(city);
+
+        waitingBeforePlunder.delete(city);
+
+        if (!pending || pending.length === 0) {
+          take();
+
+          return;
         }
 
-        if (amount !== 0) {
-          engine.emit('city:plundered', city, captor, loser, amount);
-        }
+        Promise.all(pending).then(take, take);
       })
     ),
 

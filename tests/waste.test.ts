@@ -302,6 +302,7 @@ describe('waste in a city', (): void => {
       ...processYield(
         {
           getByCity: () => ({
+            building: () => null,
             add: (production: Yield) => added.push(production.value()),
             check: () => {},
           }),

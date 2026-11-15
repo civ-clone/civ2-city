@@ -8,6 +8,7 @@ import { RuleRegistry } from '@civ-clone/core-rule/RuleRegistry';
 import { TileImprovementRegistry } from '@civ-clone/core-tile-improvement/TileImprovementRegistry';
 import { UnitImprovementRegistry } from '@civ-clone/core-unit-improvement/UnitImprovementRegistry';
 import Captured from '@civ-clone/core-city/Rules/Captured';
+import City from '@civ-clone/core-city/City';
 import { CityGrowthRegistry } from '@civ-clone/core-city-growth/CityGrowthRegistry';
 import { Engine } from '@civ-clone/core-engine/Engine';
 import Player from '@civ-clone/core-player/Player';
@@ -48,6 +49,16 @@ export declare const withCaptureDefaults: ({
  *  Workshop, which comes last in `city_capture_aftermath`. Plunder, then Partisans, as the original runs them.
  */
 export declare const plunderPriority = 2500;
+/**
+ * Holds `city`'s plunder until `pending` settles: a choice the loser makes at the capture that spends its gold first,
+ *  such as civ2-city-improvement's Palace escape (`city_capture_aftermath` :5462-5475 runs the escape before the
+ *  plunder, which is capped to what's left). Call it from a `Captured` rule that runs before `plunderPriority`; the
+ *  plunder takes every promise registered for the capture, and forgets them.
+ */
+export declare const waitBeforePlunder: (
+  city: City,
+  pending: Promise<unknown>
+) => void;
 export declare const partisansPriority = 2600;
 /**
  * Plunder, the units the city supported, and Partisans: OpenCiv2 `src/auto/city.cpp` `city_capture_aftermath`

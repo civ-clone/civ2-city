@@ -23,7 +23,15 @@ effective @COSMIC values; the tables by government are civ2-government's, and th
   shield, the railroad's half again (on the city's square once Railroad is known), the −1 below Monarchy unless the
   city celebrates, +1 trade under the Republic and Democracy or from Monarchy up while celebrating, and pollution's
   halving. The city's worked squares and its workers' choice of squares both ask `City#tileYields`.
-- **Specialists** (`Rules/City/yield`): an Entertainer gives 2 luxuries, a Tax Collector 3 gold, a Scientist 3 research.
+- **Specialists** (`Rules/City/yield`, `specialist-available`): an Entertainer gives 2 luxuries, a Tax Collector 3
+  gold, a Scientist 3 research. Below size 5 a specialist can only be made an Entertainer.
+- **Production** (`Rules/City/build`, `process-yield`): Civ2's categories are units, improvements, and everything
+  numbered past the Solar Plant (spaceship parts, Capitalization and Wonders). A person who changes to another category
+  loses half the box, rounded down (@COSMIC's change penalty), counted from where the turn started, so changing back
+  restores it; never on Chieftain, never for a computer player. A computer player's finished unit or improvement keeps
+  what was over its cost; a person's box, and anyone's after a Wonder, starts again from 0. While a city builds
+  Capitalization its shields, after waste and support, go straight into the treasury (none in disorder or Anarchy) and
+  the box stays as it was; it isn't announced as waiting.
 - **Corruption** (`lib/corruption`, `Rules/City/corruption`): distance × trade × 3 / (divisor × 20), at most the trade,
   divisors 4, 5, 6, 7, 7, 8, 8 in Civ2's government order. The distance is to the player's nearest Palace by Civ2's
   measure (the longer gap plus half the shorter, `map_distance_diag`), 32 with none; Communism measures every city at
@@ -73,7 +81,6 @@ effective @COSMIC values; the tables by government are civ2-government's, and th
 
 ## Not yet (Civ2 M2a deviations and gaps)
 
-- **Civ1-shaped specialists:** no "Entertainers only below size 5".
 - **Corruption and waste:** no alliances in civ2 yet, so every other player's city and unit blocks the capital link
   (`CapitalLink`'s `allied` option). Land masses are the world's as built: Civ2 recounts them when terrain changes. On a
   hexagonal grid there's no logical square axis, so the distance is the rounded straight line and no road links.
@@ -85,10 +92,7 @@ effective @COSMIC values; the tables by government are civ2-government's, and th
   and the "defender lost" mark on the city a disbanded unit stood in.
 - **Growth limits and the Granary:** the Aqueduct (8) and Sewer System (12) caps and the Granary's or Pyramids' half
   box are civ2-city-improvement's and civ2-wonder's.
-- **The computer players' late-game food box:** after turn 200, above Warlord, Civ2 takes up to 2 rows off while a
-  person leads (civ2-difficulty's `foodBoxRows` leaves it out).
 - **Fanatics** are exempt from support by their class (`base-unit-fanatic`), not by a unit flag or trait.
-- **A city destroyed** (`city_delete`) disbands the units it supported: no partisans and no rehoming.
 - **Defence:** City Walls and the Great Wall don't spare the city yet (civ2-city-improvement, civ2-wonder).
 - **Famine:** Civ2 leaves a computer player's unseen city's settlers alone; this disbands them. No food caravans.
 - **Auto build:** only improvements are scored: Civ2's Wonder and unit scores aren't ported, so units only finds

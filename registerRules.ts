@@ -2,6 +2,7 @@ import { Game, defaultGame } from '@civ-clone/core-game';
 import cityAutoBuild from './Rules/City/auto-build';
 import cityBuildPriority from './Rules/City/build-priority';
 import cityBuildingComplete from './Rules/City/building-complete';
+import cityBuild from './Rules/City/build';
 import cityBuildingHeld from './Rules/City/building-held';
 import cityCanBeWorked from './Rules/City/can-be-worked';
 import cityCaptured from './Rules/City/captured';
@@ -19,6 +20,7 @@ import cityShrink from './Rules/City/shrink';
 import cityTileReassigned from './Rules/City/tile-reassigned';
 import cityTileReleased from './Rules/City/tile-released';
 import cityTileWorked from './Rules/City/tile-worked';
+import citySpecialistAvailable from './Rules/City/specialist-available';
 import cityTileYield from './Rules/City/tile-yield';
 import cityTiles from './Rules/City/tiles';
 import cityYield from './Rules/City/yield';
@@ -146,8 +148,12 @@ export const register = (game: Game): void => {
       game.cityBuilds,
       game.cityGrowth,
       game.units,
-      game.rules
+      game.rules,
+      game.playerTreasuries,
+      game.playerGovernments
     ),
+    ...cityBuild(game.clients, game.difficulty, game.rules),
+    ...citySpecialistAvailable(game.cityGrowth),
     ...cityRenamed(game.cityNames),
     ...cityShrink(game.workedTiles, game.specialists, game.engine),
     ...cityTileYield(

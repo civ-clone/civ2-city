@@ -13,6 +13,7 @@ import {
   powerRanks,
   treasuryShare,
 } from '../lib/capture';
+import { waitBeforePlunder } from '../lib/captureAftermath';
 import Advance from '@civ-clone/core-science/Advance';
 import Barbarian from '@civ-clone/base-civilization-barbarian/Barbarian';
 import City from '@civ-clone/core-city/City';
@@ -310,6 +311,7 @@ const setUp = async ({
     unitRegistry,
     world,
     ruleRegistry,
+    playerTreasuryRegistry,
   };
 };
 
@@ -346,6 +348,41 @@ describe('city:captured plunder', (): void => {
 
     expect(goldOf(loser)).equal(500 - 307);
     expect(goldOf(captor)).equal(307);
+  });
+});
+
+describe('city:captured plunder after an answer', (): void => {
+  it('waits for a Palace escape the loser has yet to answer, and caps the plunder to what it leaves', async (): Promise<void> => {
+    // 8 × 1200 / (8 + 4 + 1) = 738, from the gold before the capture; the loser says yes and pays 1,000, leaving 200.
+    const {
+        city,
+        captor,
+        loser,
+        goldOf,
+        ruleRegistry,
+        playerTreasuryRegistry,
+      } = await setUp({ loserGold: 1200 }),
+      answered = new Promise<void>((resolve) => setTimeout(resolve, 0)).then(
+        () => {
+          playerTreasuryRegistry.getByPlayerAndType(loser, Gold).subtract(1000);
+        }
+      );
+
+    ruleRegistry.register(
+      new Captured(
+        new Effect((captured: City) => waitBeforePlunder(captured, answered))
+      )
+    );
+
+    city.capture(captor);
+
+    expect(goldOf(captor)).equal(0);
+
+    await answered;
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(goldOf(loser)).equal(0);
+    expect(goldOf(captor)).equal(200);
   });
 });
 
