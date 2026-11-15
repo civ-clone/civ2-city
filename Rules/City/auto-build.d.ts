@@ -19,7 +19,9 @@ export interface AutoBuildOptions {
    *  (`city_process_production`, `src/auto/city_production.cpp` ~3142: `city_set_production(city, 99)` then, if the
    *  build reads 99, it clears `CITYF_AUTOBUILD` and both mode flags), but `city_set_production` (`src/auto/city.cpp`
    *  ~1488) only stores a choice below 99, so the build never reads 99 and the city stays on Auto: off by default, as
-   *  the code plays.
+   *  the code plays. The other places a finished build chooses again (`city_process_production_announce` ~2412 for an
+   *  improvement, `city_process_production_unit` ~2839 for a unit) don't clear it either, and leave the finished item
+   *  as the build when nothing is chosen.
    */
   clearWhenNothingChosen?: boolean;
 }
