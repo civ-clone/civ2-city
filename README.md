@@ -57,6 +57,16 @@ effective @COSMIC values; the tables by government are civ2-government's, and th
     a captor without Guerrilla Warfare or +1 against one with it. Each goes fortified to the best free land square of
     the city's 20 (terrain defence × 2, +1 road, +1 railroad, × 2 fortress), Civ2's square order on a tie. Emits
     `city:partisans` (city, loser, units, captor).
+- **Auto build** (`lib/autoMode`, `Rules/City/auto-build`, `Rules/City/build-priority`, scores in
+  `lib/chooseProduction`, the survey in `lib/chooseProductionState`): `setAutoMode(cityBuild, mode)` puts a city on Auto
+  for anything, units only or improvements only (`'any'`, `'units'`, `'improvements'`; `null` takes it off), and
+  chooses at once; the mode is a `civ2-city:auto-mode` pending effect, so it is saved, and goes when the city is
+  captured or destroyed. A city on Auto chooses again when its build is finished or can't be built, and at the start
+  of its player's turn while it builds nothing, with base-city-auto-build. What it chooses is Civ2's
+  `city_choose_production`: each improvement's score from `city_choose_production_improvement_score`, weighed by
+  `_try_improvement` (lowest wanted most, nothing over 500), as a `BuildPriority` of 501 − the score, only for a city
+  on Auto. With nothing it would choose it stays on Auto (Civ2's code never clears it, for all it means to), building
+  another of a unit it has just finished; the `clearWhenNothingChosen` option takes it off Auto instead.
 - **Defence:** a city whose defender loses an attack loses a citizen (unless it has City Walls or its owner the Great
   Wall, the attack came from the sea, or it is a person's city on Chieftain); that is civ2-unit's rule, so it isn't
   here. `Rules/Unit/defeated` only tells the client of a defeat.
@@ -81,6 +91,8 @@ effective @COSMIC values; the tables by government are civ2-government's, and th
 - **A city destroyed** (`city_delete`) disbands the units it supported: no partisans and no rehoming.
 - **Defence:** City Walls and the Great Wall don't spare the city yet (civ2-city-improvement, civ2-wonder).
 - **Famine:** Civ2 leaves a computer player's unseen city's settlers alone; this disbands them. No food caravans.
-- **Auto build:** a city on Auto doesn't choose for itself (`building-cancelled`, `building-complete` and turn-start
-  auto rules: R3b).
+- **Auto build:** only improvements are scored, so a city on Auto never chooses a Wonder or a unit (units only finds
+  nothing); no CITYPREF.TXT list. The AI's continent policy (`continent_policy`, 5 assumed), reputation, vendettas,
+  power ranks (the first person stands for `best_human_rank`), subversion, the spaceship race and the AEGIS Cruiser
+  aren't kept, so their terms are left out; "next to the ocean" is any ocean, not ocean body 1.
 - **Trade routes:** none in M2a.
