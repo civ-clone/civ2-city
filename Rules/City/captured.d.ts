@@ -7,6 +7,7 @@ import { SpecialistRegistry } from '@civ-clone/core-city/SpecialistRegistry';
 import { UnitRegistry } from '@civ-clone/core-unit/UnitRegistry';
 import { WorkedTileRegistry } from '@civ-clone/core-city/WorkedTileRegistry';
 import Captured from '@civ-clone/core-city/Rules/Captured';
+import { CaptureDependencies } from '../../lib/captureAftermath';
 export declare const getRules: (
   unitRegistry?: UnitRegistry,
   cityGrowthRegistry?: CityGrowthRegistry,
@@ -15,6 +16,7 @@ export declare const getRules: (
   playerWorldRegistry?: PlayerWorldRegistry,
   workedTileRegistry?: WorkedTileRegistry,
   specialistRegistry?: SpecialistRegistry,
-  availableSpecialistRegistry?: AvailableSpecialistRegistry
+  availableSpecialistRegistry?: AvailableSpecialistRegistry,
+  capture?: CaptureDependencies
 ) => Captured[];
 export default getRules;
