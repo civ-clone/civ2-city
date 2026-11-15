@@ -1,7 +1,5 @@
 import { atLevel, instanceOf, playedBy, sized } from './lib/stubs';
 import { Game } from '@civ-clone/core-game';
-import { Grassland, Ocean } from '@civ-clone/civ2-world/Terrains';
-import Attack from '@civ-clone/base-unit-action-attack/Attack';
 import CityGrowth from '@civ-clone/core-city-growth/CityGrowth';
 import CityGrowthRegistry from '@civ-clone/core-city-growth/CityGrowthRegistry';
 import RuleRegistry from '@civ-clone/core-rule/RuleRegistry';
@@ -11,7 +9,6 @@ import City from '@civ-clone/core-city/City';
 import InciteRevolt from '@civ-clone/base-unit-action-incite-revolt/InciteRevolt';
 import Rule from '@civ-clone/core-rule/Rule';
 import captured from '../Rules/City/captured';
-import defeated from '../Rules/Unit/defeated';
 import { expect } from 'chai';
 import register from '../registerRules';
 
@@ -122,39 +119,6 @@ describe('city:captured growth cost', (): void => {
     ).process(city, computer);
 
     expect(growth.cost().value()).equal(24);
-  });
-});
-
-describe('unit:defeated', (): void => {
-  const human = { name: 'human' },
-    computer = { name: 'computer' },
-    tile = {},
-    land = { terrain: () => instanceOf(Grassland) },
-    sea = { terrain: () => instanceOf(Ocean) },
-    shrinks = (level: number, player: unknown, from: unknown = land): boolean =>
-      byId(
-        defeated(
-          { getByTile: () => ({}) } as any,
-          undefined,
-          undefined,
-          atLevel(level),
-          playedBy(human)
-        ),
-        'civ2-city:unit/defeated/shrink-defended-city'
-      ).validate(
-        { tile: () => tile, player: () => player },
-        { tile: () => from },
-        instanceOf(Attack, { to: () => tile })
-      );
-
-  it("shrinks the city of a defender that loses, but not a person's city on Chieftain", (): void => {
-    expect(shrinks(0, human)).false;
-    expect(shrinks(0, computer)).true;
-    expect(shrinks(1, human)).true;
-  });
-
-  it('spares it an attack from the sea', (): void => {
-    expect(shrinks(3, computer, sea)).false;
   });
 });
 

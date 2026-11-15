@@ -22,8 +22,9 @@ effective @COSMIC values; the tables by government are civ2-government's, and th
   Despotism add the level; none under Fundamentalism and Democracy; halved in the Palace's city.
 - **Capture** (`Rules/City/captured`): the box is emptied, Auto turned off and the item kept; the city loses a citizen,
   unless it was incited or retaken by its founder and has only one.
-- **Defence** (`Rules/Unit/defeated`): a city whose defender loses an attack loses a citizen, unless the attack came
-  from the sea or the city is a person's on Chieftain.
+- **Defence:** a city whose defender loses an attack loses a citizen (unless it has City Walls or its owner the Great
+  Wall, the attack came from the sea, or it is a person's city on Chieftain); that is civ2-unit's rule, so it isn't
+  here. `Rules/Unit/defeated` only tells the client of a defeat.
 
 ## Not yet (Civ2 M2a deviations and gaps)
 
