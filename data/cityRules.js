@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.scientistResearch = exports.taxCollectorGold = exports.entertainerLuxuries = exports.noTradeCorruption = exports.maximumDistance = exports.noCapitalDistance = exports.corruptionDivisor = void 0;
+exports.scientistResearch = exports.taxCollectorGold = exports.entertainerLuxuries = exports.noTradeCorruption = exports.noShieldWaste = exports.wasteDistance = exports.maximumDistance = exports.noCapitalDistance = exports.corruptionDivisor = void 0;
 const governments_1 = require("@civ-clone/civ2-rules/data/governments");
 // Civilization II's city numbers that aren't in RULES.TXT, from OpenCiv2's reconstruction of the game
 //  (richardpenman/civ2@49f26ec, `src/auto/city.cpp`), each by the function that holds it. Those that are in RULES.TXT
@@ -17,6 +17,14 @@ exports.corruptionDivisor = Object.freeze([
 exports.noCapitalDistance = 32;
 /** The furthest a distance counts, once the human's level is added to it (`city_calc_corruption`). */
 exports.maximumDistance = 32;
+/** The furthest the distance counts for shield waste, before the level is added (`city_calc_shields_pollution` passes
+ *  `clamp_distance`). */
+exports.wasteDistance = 16;
+/** The governments without shield waste (`city_calc_shields_pollution`). */
+exports.noShieldWaste = Object.freeze([
+    governments_1.FUNDAMENTALISM,
+    governments_1.DEMOCRACY,
+]);
 /** The governments without trade corruption (`city_calc_trade_happiness`). */
 exports.noTradeCorruption = Object.freeze([
     governments_1.FUNDAMENTALISM,

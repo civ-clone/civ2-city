@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.UnitSupportProduction = exports.UnitSupportFood = exports.Trade = exports.Research = exports.Production = exports.PopulationSupportFood = exports.Luxuries = exports.Gold = exports.FoodStorage = exports.Food = exports.Corruption = void 0;
+exports.Waste = exports.UnitSupportProduction = exports.UnitSupportFood = exports.Trade = exports.Research = exports.Production = exports.PopulationSupportFood = exports.Luxuries = exports.Gold = exports.FoodStorage = exports.Food = exports.Corruption = void 0;
 var Corruption_1 = require("@civ-clone/base-city-yield-corruption/Corruption");
 Object.defineProperty(exports, "Corruption", { enumerable: true, get: function () { return Corruption_1.Corruption; } });
 var Food_1 = require("@civ-clone/base-terrain-yield-food/Food");
@@ -23,4 +23,6 @@ var UnitSupportFood_1 = require("@civ-clone/base-city-yield-unit-support-food/Un
 Object.defineProperty(exports, "UnitSupportFood", { enumerable: true, get: function () { return UnitSupportFood_1.UnitSupportFood; } });
 var UnitSupportProduction_1 = require("@civ-clone/base-city-yield-unit-support-production/UnitSupportProduction");
 Object.defineProperty(exports, "UnitSupportProduction", { enumerable: true, get: function () { return UnitSupportProduction_1.UnitSupportProduction; } });
+var Waste_1 = require("./Waste");
+Object.defineProperty(exports, "Waste", { enumerable: true, get: function () { return Waste_1.Waste; } });
 //# sourceMappingURL=Yields.js.map

@@ -1,7 +1,7 @@
 # civ2-city
 
 Civilization II's cities, on `base-city-lifecycle`: founding, the 21 squares a city works, growth and famine with
-Civ2's food box, unit support, specialists and trade corruption. The numbers in RULES.TXT come from `civ2-rules`'
+Civ2's food box, unit support, specialists, trade corruption and shield waste. The numbers in RULES.TXT come from `civ2-rules`'
 effective @COSMIC values; the tables by government are civ2-government's, and the rest are in `data/cityRules.ts`, each with the OpenCiv2 function it comes from
 (richardpenman/civ2@49f26ec).
 
@@ -17,9 +17,24 @@ effective @COSMIC values; the tables by government are civ2-government's, and th
   Fundamentalism, none under the Republic and Democracy), from civ2-government's `unitSupport` tables. Units whose role is diplomacy or trade cost nothing; under
   Fundamentalism a Fanatic is counted but never charged. Roles come from `base-unit-role`.
 - **Specialists** (`Rules/City/yield`): an Entertainer gives 2 luxuries, a Tax Collector 3 gold, a Scientist 3 research.
-- **Corruption** (`lib/corruption`): distance × trade × 3 / (divisor × 20), divisors 4, 5, 6, 7, 7, 8, 8 in Civ2's
-  government order; Communism measures every city at @COSMIC's distance; a person's cities under Anarchy and
-  Despotism add the level; none under Fundamentalism and Democracy; halved in the Palace's city.
+- **Corruption** (`lib/corruption`, `Rules/City/corruption`): distance × trade × 3 / (divisor × 20), at most the trade,
+  divisors 4, 5, 6, 7, 7, 8, 8 in Civ2's government order. The distance is to the player's nearest Palace by Civ2's
+  measure (the longer gap plus half the shorter, `map_distance_diag`), 32 with none; Communism measures every city at
+  @COSMIC's distance; a person's cities under Anarchy and Despotism add the level (up to 32); halved in the Palace's
+  city; none under Fundamentalism and Democracy. A celebrating city (`lib/celebrating`) counts its government one step
+  up, for the divisor and the level. The Courthouse's halving of trade corruption is civ2-city-improvement's.
+- **Shield waste** (`lib/corruption`'s `shieldWaste`, the `Waste` yield, a negative `Production`): the same formula on
+  the shields less their support (after the Factory's and plants' bonuses), the distance counting at most 16, halved by
+  the Palace or a Courthouse, times (3 − link) / 3, over (government ÷ 2) + 1, each rounded down. None for the
+  barbarians, under Fundamentalism and Democracy, or while building the Palace with no capital. It is a `Cost`, after
+  the units' support, so the build gets what's left.
+- **Capital link** (`lib/capitalLink`, for shield waste only): Civ2's own walk (`city_calc_capital_link`,
+  `map_road_connection`). The capital is linked 1 to itself, 2 once its player knows Railroad. Another city on the same
+  land mass and under 23 squares away walks the pathfinder's one shortest route over land (ties nearer the capital,
+  then in Civ2's direction order): 2 if every square stepped on has a railroad, 1 if each has a road, 0 at the first
+  without one, after more than 50 squares, or at another player's city or unit (a barbarian's unit doesn't block). It
+  stops early, linked, at any city of the player's own. On another land mass, an airport at each end gives 1. The cost
+  grid is kept per capital square until a square's terrain changes; the walk itself is fresh each time.
 - **Capture** (`Rules/City/captured`): the box is emptied, Auto turned off and the item kept; the city loses a citizen,
   unless it was incited or retaken by its founder and has only one.
 - **Defence:** a city whose defender loses an attack loses a citizen (unless it has City Walls or its owner the Great
@@ -29,8 +44,9 @@ effective @COSMIC values; the tables by government are civ2-government's, and th
 ## Not yet (Civ2 M2a deviations and gaps)
 
 - **Civ1-shaped specialists:** no "Entertainers only below size 5".
-- **Civ1-shaped corruption:** trade only. No shield waste or capital link, no celebration step in the divisor, no
-  Courthouse halving (civ2-city-improvement), and the distance is the world's own, not Civ2's diagonal measure.
+- **Corruption and waste:** no alliances in civ2 yet, so every other player's city and unit blocks the capital link
+  (`CapitalLink`'s `allied` option). Land masses are the world's as built: Civ2 recounts them when terrain changes. On a
+  hexagonal grid there's no logical square axis, so the distance is the rounded straight line and no road links.
 - **City square:** irrigation and a road, as Civ1's; Civ2's mine bonus where the terrain can't be irrigated and the
   centre's farmland aren't modelled.
 - **Capture:** the city's founder is its original player (Civ2 records the last owner before each capture); no plunder, lost improvements, stolen advance, partisans or civil war; the previous owner's units are
