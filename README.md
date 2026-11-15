@@ -20,8 +20,21 @@ effective @COSMIC values; the tables by government are civ2-government's, and th
 - **Corruption** (`lib/corruption`): distance × trade × 3 / (divisor × 20), divisors 4, 5, 6, 7, 7, 8, 8 in Civ2's
   government order; Communism measures every city at @COSMIC's distance; a person's cities under Anarchy and
   Despotism add the level; none under Fundamentalism and Democracy; halved in the Palace's city.
-- **Capture** (`Rules/City/captured`): the box is emptied, Auto turned off and the item kept; the city loses a citizen,
-  unless it was incited or retaken by its founder and has only one.
+- **Capture** (`Rules/City/captured`, `lib/captureAftermath`, numbers in `lib/capture`): the box is emptied, Auto
+  turned off and the item kept; the city loses a citizen, unless it was incited or retaken by its founder and has
+  only one.
+  - **Plunder:** the captor takes size × the loser's gold / (the loser's citizens in all its cities + 1), from before
+    the capture, clamped to the gold the loser has left after a Palace escape; Barbarians take it but keep none.
+    Emits `city:plundered` (city, captor, loser, amount).
+  - **Units the city supported:** Partisans lose their home; a computer player's only Defend-role unit in another of
+    its cities is rehomed there; the rest are disbanded.
+  - **Partisans:** when the city survives, the loser has a city left, the captor isn't its founder (or a Spy's
+    subverting Diplomat), and the loser is Communist or a Democracy, knows Communism, or anyone knows Guerrilla
+    Warfare: (size + 5) / 8 × (government and power-rank differences + 1) / 2, halved when incited, −1 without
+    Conscription, none without Guerrilla Warfare unless the loser knows Communism and Gunpowder, then doubled against
+    a captor without Guerrilla Warfare or +1 against one with it. Each goes fortified to the best free land square of
+    the city's 20 (terrain defence × 2, +1 road, +1 railroad, × 2 fortress), Civ2's square order on a tie. Emits
+    `city:partisans` (city, loser, units, captor).
 - **Defence:** a city whose defender loses an attack loses a citizen (unless it has City Walls or its owner the Great
   Wall, the attack came from the sea, or it is a person's city on Chieftain); that is civ2-unit's rule, so it isn't
   here. `Rules/Unit/defeated` only tells the client of a defeat.
@@ -33,8 +46,12 @@ effective @COSMIC values; the tables by government are civ2-government's, and th
   Courthouse halving (civ2-city-improvement), and the distance is the world's own, not Civ2's diagonal measure.
 - **City square:** irrigation and a road, as Civ1's; Civ2's mine bonus where the terrain can't be irrigated and the
   centre's farmland aren't modelled.
-- **Capture:** the city's founder is its original player (Civ2 records the last owner before each capture); no plunder, lost improvements, stolen advance, partisans or civil war; the previous owner's units are
-  disbanded, not rehomed.
+- **Capture:** the city's founder is its original player (Civ2 records the last owner before each capture); no civil
+  war. Power ranks are taken as the capture starts, not at the start of the turn, and reputation and vendettas
+  aren't modelled, so Partisans are never veterans unless a ruleset passes `reputation`/`vendetta`. Not yet: a
+  person's captured city starting in disorder under a Republic or Democracy, the captor's new build (Settlers for a
+  computer player, the best defender when the item can't be built), the size-1 city a computer player may keep whole,
+  and the "defender lost" mark on the city a disbanded unit stood in.
 - **Growth limits and the Granary:** the Aqueduct (8) and Sewer System (12) caps and the Granary's or Pyramids' half
   box are civ2-city-improvement's and civ2-wonder's.
 - **The computer players' late-game food box:** after turn 200, above Warlord, Civ2 takes up to 2 rows off while a
