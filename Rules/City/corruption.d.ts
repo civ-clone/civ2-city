@@ -5,7 +5,9 @@ import { GameDifficultyRegistry } from '@civ-clone/core-difficulty/GameDifficult
 import { PendingEffectRegistry } from '@civ-clone/core-pending-effect';
 import { PlayerGovernmentRegistry } from '@civ-clone/core-government/PlayerGovernmentRegistry';
 import Cost from '@civ-clone/core-city/Rules/Cost';
+import Built from '@civ-clone/core-tile-improvement/Rules/Built';
 import Captured from '@civ-clone/core-city/Rules/Captured';
+import CityCreated from '@civ-clone/core-city/Rules/Created';
 import CityImprovementCreated from '@civ-clone/core-city-improvement/Rules/Created';
 import Destroyed from '@civ-clone/core-city/Rules/Destroyed';
 import TerrainChanged from '@civ-clone/core-world/Rules/TerrainChanged';
@@ -32,5 +34,7 @@ export declare const getRules: (
   | CityImprovementCreated
   | Captured
   | Destroyed
+  | CityCreated
+  | Built
 )[];
 export default getRules;

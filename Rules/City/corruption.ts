@@ -23,10 +23,19 @@ import {
 import { shieldWaste, tradeCorruption } from '../../lib/corruption';
 import City from '@civ-clone/core-city/City';
 import Cost from '@civ-clone/core-city/Rules/Cost';
+import Built from '@civ-clone/core-tile-improvement/Rules/Built';
 import Captured from '@civ-clone/core-city/Rules/Captured';
+import CityCreated from '@civ-clone/core-city/Rules/Created';
+import Pillaged from '@civ-clone/core-tile-improvement/Rules/Pillaged';
+import Railroad from '@civ-clone/base-tile-improvement-railroad/Railroad';
+import Removed from '@civ-clone/core-tile-improvement/Rules/Removed';
+import Road from '@civ-clone/base-tile-improvement-road/Road';
+import TileImprovement from '@civ-clone/core-tile-improvement/TileImprovement';
 import CityImprovementCreated from '@civ-clone/core-city-improvement/Rules/Created';
 import Destroyed from '@civ-clone/core-city/Rules/Destroyed';
 import Courthouse from '@civ-clone/base-city-improvement-courthouse/Courthouse';
+import Criterion from '@civ-clone/core-rule/Criterion';
+import Tile from '@civ-clone/core-world/Tile';
 import Effect from '@civ-clone/core-rule/Effect';
 import { High } from '@civ-clone/core-rule/Priorities';
 import Low from '@civ-clone/core-rule/Priorities/Low';
@@ -82,6 +91,8 @@ export const getRules = (
   | CityImprovementCreated
   | Captured
   | Destroyed
+  | CityCreated
+  | Built
 )[] => {
   const {
       cityBuildRegistry = cityBuildRegistryInstance,
@@ -192,6 +203,28 @@ export const getRules = (
     new Destroyed(
       'civ2-city:capital-link/destroyed',
       new Effect((): void => capitalLink.invalidateCapitals())
+    ),
+    new CityCreated(
+      'civ2-city:capital-link/created',
+      new Effect((): void => capitalLink.invalidateCapitals())
+    ),
+
+    // A road or railroad built, pillaged or removed changes the links at once, as Civ2 works the link out again on
+    //  every `city_recalc`.
+    ...[
+      ['built', Built],
+      ['pillaged', Pillaged],
+      ['removed', Removed],
+    ].map(
+      ([name, RuleType]) =>
+        new (RuleType as typeof Built)(
+          `civ2-city:capital-link/route-${name}`,
+          new Criterion(
+            (tile: Tile, improvement: TileImprovement): boolean =>
+              improvement instanceof Road || improvement instanceof Railroad
+          ),
+          new Effect((): void => capitalLink.invalidateCapitals())
+        )
     ),
   ];
 };

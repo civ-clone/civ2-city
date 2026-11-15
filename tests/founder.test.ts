@@ -7,6 +7,7 @@ import Player from '@civ-clone/core-player/Player';
 import PlayerRegistry from '@civ-clone/core-player/PlayerRegistry';
 import RuleRegistry from '@civ-clone/core-rule/RuleRegistry';
 import { expect } from 'chai';
+import destroyed from '../Rules/City/destroyed';
 import mapWorld from './lib/mapWorld';
 
 // OpenCiv2 `src/auto/city.cpp` `city_capture_aftermath` (~5407 `was_founder`, ~5538 `founder = civ2`) and
@@ -105,5 +106,24 @@ describe("Civ2's founder of a city", (): void => {
 
     expect(effects.length).equal(1);
     expect(effects[0].data()).eql({ loser: b.id(), turn: '10' });
+  });
+
+  it('is forgotten when the city is destroyed', async (): Promise<void> => {
+    const { a, city, dependencies, pendingEffectRegistry } = await setUp();
+
+    recordCapture(city, a, dependencies);
+    destroyed(
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      { getByCity: () => [] } as any,
+      undefined,
+      pendingEffectRegistry
+    )
+      .filter((rule) => rule.id() === 'civ2-city:city/destroyed/forget-founder')
+      .forEach((rule) => rule.process(city, null));
+
+    expect(pendingEffectRegistry.getByTarget(city).length).equal(0);
   });
 });

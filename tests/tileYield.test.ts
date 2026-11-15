@@ -38,6 +38,12 @@ import TileImprovementRegistry from '@civ-clone/core-tile-improvement/TileImprov
 import Yield from '@civ-clone/core-yield/Yield';
 import { expect } from 'chai';
 import mapWorld from './lib/mapWorld';
+import '@civ-clone/civ2-world/registerTerrains';
+import '@civ-clone/civ2-world/registerTerrainFeatures';
+import '@civ-clone/civ2-world/registerTileImprovements';
+import { instance as availableTerrainFeatureRegistry } from '@civ-clone/core-terrain-feature/AvailableTerrainFeatureRegistry';
+import { instance as availableTileImprovementRegistry } from '@civ-clone/core-tile-improvement/AvailableTileImprovementRegistry';
+import { instance as terrainRegistry } from '@civ-clone/core-terrain/TerrainRegistry';
 import tileYield, { laterSquareSteps } from '../Rules/City/tile-yield';
 import worldTileYield from '@civ-clone/civ2-world/Rules/Tile/yield';
 import worldYieldModifier from '@civ-clone/civ2-world/Rules/Tile/yield-modifier';
@@ -129,6 +135,8 @@ describe('what a square gives its city', (): void => {
         );
 
     return {
+      terrainFeatureRegistry,
+      tileImprovementRegistry,
       addCityRules,
       centre,
       city,
@@ -148,39 +156,65 @@ describe('what a square gives its city', (): void => {
   });
 
   it('knows every provider civ2-world’s square rules give after the road', async (): Promise<void> => {
-    // The square step takes out the railroad, government and pollution yields by provider. Any other provider civ2-world
-    //  gives must be a step before the road's end (terrain, special, irrigation, mine, river, road), or this fails.
-    const before = new Set([
-      'Irrigation',
-      'Mine',
-      'River',
-      'Road',
-      ...[Grassland, Hills, Plains, Ocean, Mountains, Forest, Glacier].map(
-        (Type) => Type.name
-      ),
-    ]);
+    // The square step takes out the railroad, government and pollution yields by provider. Every other provider
+    //  civ2-world's square rules give, on every terrain, special and improvement it registers, must be a step up to the
+    //  road (the terrain, the special, irrigation, mine, river, road), or this fails: a new one must be placed.
+    const terrains = terrainRegistry.entries(),
+      features = availableTerrainFeatureRegistry.entries(),
+      improvements = availableTileImprovementRegistry.entries(),
+      before = new Set([
+        Irrigation.name,
+        Mine.name,
+        Road.name,
+        ...terrains.map((Type) => Type.name),
+        ...features.map((Type) => Type.name),
+      ]);
+
+    expect(terrains.length).above(10);
+    expect(features.length).above(10);
+    expect(improvements.length).above(5);
 
     for (const government of [Despotism, Monarchy, Republic]) {
-      const { player, square } = await setUp(government),
-        tiles = [
-          square(0, 0, Grassland, Irrigation, Road, Railroad, Pollution),
-          square(1, 0, Hills, Mine, Road, Railroad, Pollution),
-          square(2, 0, Plains, Irrigation, Road, Railroad),
-          square(3, 0, Ocean, Pollution),
-          square(4, 0, Mountains, Mine, Railroad, Pollution),
-        ];
+      const {
+        player,
+        square,
+        terrainFeatureRegistry,
+        tileImprovementRegistry,
+      } = await setUp(government);
 
-      tiles.forEach((tile) =>
-        tile
-          .yields(player)
-          .flatMap((tileYield) => tileYield.values())
-          .forEach(
-            ([, provider]) =>
-              expect(
-                before.has(provider) || laterSquareSteps.includes(provider),
-                provider
-              ).true
-          )
+      terrains.forEach((TerrainType, x) =>
+        [null, ...features].forEach((Feature, y) => {
+          const tile = square(
+            x % 5,
+            y % 5,
+            TerrainType,
+            ...(improvements as (typeof TileImprovement)[])
+          );
+
+          if (Feature !== null) {
+            terrainFeatureRegistry.register(new Feature(tile.terrain()));
+          }
+
+          tile.clearYieldCache(player);
+
+          tile
+            .yields(player)
+            .flatMap((tileYield) => tileYield.values())
+            .forEach(
+              ([, provider]) =>
+                expect(
+                  before.has(provider) || laterSquareSteps.includes(provider),
+                  `${TerrainType.name} ${Feature?.name}: ${provider}`
+                ).true
+            );
+
+          // Clear the square for the next case.
+          tileImprovementRegistry
+            .getByTile(tile)
+            .forEach((improvement) =>
+              tileImprovementRegistry.unregister(improvement)
+            );
+        })
       );
     }
   });

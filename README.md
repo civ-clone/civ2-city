@@ -51,11 +51,13 @@ effective @COSMIC values; the tables by government are civ2-government's, and th
   without one, after more than 50 squares, or at another player's city or unit (a barbarian's unit doesn't block). It
   stops early, linked, at any city of the player's own. On another land mass, an airport at each end gives 1. The cost
   grid is kept per capital square until a square's terrain changes; each player's Palaces and each city's link are
-  worked out once a turn, and again when an improvement is built or a city is captured or destroyed.
+  worked out again when a city is founded, captured or destroyed, an improvement is built, or a road or railroad is
+  built, pillaged or removed; a unit moving onto or off the route only counts when the link is next worked out.
 - **Capture** (`Rules/City/captured`, `lib/captureAftermath`, numbers in `lib/capture`): the box is emptied, Auto
   turned off and the item kept; the city loses a citizen, unless it was incited or retaken by its founder and has
   only one. The founder is Civ2's (`lib/founder`): the loser of the city's last capture, or its owner once 63 turns
-  have passed since, or the player who founded it if it was never taken; kept in the save as a pending effect.
+  have passed since, or the player who founded it if it was never taken; kept in the save as a pending effect. A city
+  captured in a game saved before this record existed keeps its original player as its founder until it is taken again.
   - **Plunder:** the captor takes size × the loser's gold / (the loser's citizens in all its cities + 1), from before
     the capture, clamped to the gold the loser has left after a Palace escape; Barbarians take it but keep none.
     Emits `city:plundered` (city, captor, loser, amount).

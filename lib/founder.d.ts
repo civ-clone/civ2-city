@@ -9,8 +9,11 @@ import Player from '@civ-clone/core-player/Player';
  *  capture `city_process_turn` (~4450) sets it to whoever owns the city then (`(turns_captured - 1 ^ turn) & 0x3f`).
  *  It is what `was_founder` compares the captor with, so retaking a city its captor took from you is a liberation.
  *
- * Kept as a pending effect on the city (saved like any other), with the loser's id and the turn of the capture; a city
- *  never captured has its original player.
+ * Kept as a pending effect on the city (saved like any other), with the loser's id and the turn of the capture, and
+ *  forgotten when the city is destroyed; a city never captured has its original player.
+ *
+ * A known difference for saves made before this record existed: a city captured before then has no record, so its
+ *  original player stays its founder for good (until its next capture). Nothing tries to work out who lost it.
  */
 export declare const FOUNDER = 'civ2-city:founder';
 /** How many turns after a capture the owner becomes the founder: the first turn whose low 6 bits are the capture's − 1. */
@@ -29,6 +32,11 @@ export declare const founderOf: (
   owner?: Player,
   { pendingEffectRegistry, playerRegistry, turn }?: FounderDependencies
 ) => Player;
+/** Forgets `city`'s founder record, when the city is gone. */
+export declare const forgetFounder: (
+  city: City,
+  { pendingEffectRegistry }?: FounderDependencies
+) => void;
 /** Records `loser` as `city`'s founder from this turn, as a capture does. */
 export declare const recordCapture: (
   city: City,

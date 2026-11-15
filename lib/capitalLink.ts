@@ -131,12 +131,13 @@ export type CapitalLinkResult = {
  *
  * Cost: the pathfinder's cost grid depends only on the goal (the capital's square) and on which squares are land, so
  *  it is flooded once per capital square (at most 47 × 47 squares) and kept until `invalidate()`, which civ2-city's
- *  `TerrainChanged` rule calls. Each link then walks at most 50 squares, asking each for its city, its units and its
- *  grade afresh, as units come and go. Land masses are looked up once per square, until `invalidate()`.
+ *  `TerrainChanged` rule calls. Land masses are looked up once per square, until `invalidate()`.
  *
- * Each player's Palaces are found once a turn, and each city's link is worked out once a turn (Civ2 works it out as the
- *  city is processed, `city_calc_capital_link`), until `invalidateCapitals()`, which civ2-city's rules call when a city
- *  improvement is built, a city is captured or destroyed, or a square's terrain changes.
+ * Each player's Palaces are found once a turn, and each city's link is walked (at most 50 squares, asking each for its
+ *  city, its units and its grade) once a turn, until `invalidateCapitals()`. civ2-city's rules call that when a city is
+ *  founded, captured or destroyed, a city improvement is built, a road or railroad is built, pillaged or removed, or a
+ *  square's terrain changes, so the link follows them at once, as Civ2 works it out again on every `city_recalc`. Units
+ *  are the one difference: one that moves onto or off the route is only seen when the link is next worked out.
  */
 export class CapitalLink {
   private _allied: (player: Player, other: Player) => boolean;
