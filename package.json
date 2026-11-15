@@ -54,7 +54,6 @@
     "@civ-clone/base-terrain-yield-trade": "^0.1.0",
     "@civ-clone/base-tile-improvement-irrigation": "^0.1.0",
     "@civ-clone/base-tile-improvement-road": "^0.1.0",
-    "@civ-clone/base-unit-action-attack": "^0.1.9",
     "@civ-clone/base-unit-action-incite-revolt": "^0.1.0",
     "@civ-clone/base-unit-fanatic": "^0.1.0",
     "@civ-clone/base-unit-role": "^0.1.0",

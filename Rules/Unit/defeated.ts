@@ -1,74 +1,18 @@
 import {
-  CityGrowthRegistry,
-  instance as cityGrowthRegistryInstance,
-} from '@civ-clone/core-city-growth/CityGrowthRegistry';
-import {
-  CityRegistry,
-  instance as cityRegistryInstance,
-} from '@civ-clone/core-city/CityRegistry';
-import {
-  ClientRegistry,
-  instance as clientRegistryInstance,
-} from '@civ-clone/core-client/ClientRegistry';
-import {
   Engine,
   instance as engineInstance,
 } from '@civ-clone/core-engine/Engine';
-import {
-  GameDifficultyRegistry,
-  instance as gameDifficultyRegistryInstance,
-} from '@civ-clone/core-difficulty/GameDifficultyRegistry';
 import Action from '@civ-clone/core-unit/Action';
-import Attack from '@civ-clone/base-unit-action-attack/Attack';
-import Criterion from '@civ-clone/core-rule/Criterion';
 import Defeated from '@civ-clone/core-unit/Rules/Defeated';
 import Effect from '@civ-clone/core-rule/Effect';
 import Unit from '@civ-clone/core-unit/Unit';
-import { Water } from '@civ-clone/core-terrain/Types';
-import isHuman from '@civ-clone/civ2-difficulty/isHuman';
-import { levelOf } from '@civ-clone/civ2-difficulty/level';
 
-export const getRules: (
-  cityRegistry?: CityRegistry,
-  cityGrowthRegistry?: CityGrowthRegistry,
-  engine?: Engine,
-  gameDifficultyRegistry?: GameDifficultyRegistry,
-  clientRegistry?: ClientRegistry
-) => Defeated[] = (
-  cityRegistry: CityRegistry = cityRegistryInstance,
-  cityGrowthRegistry: CityGrowthRegistry = cityGrowthRegistryInstance,
-  engine: Engine = engineInstance,
-  gameDifficultyRegistry: GameDifficultyRegistry = gameDifficultyRegistryInstance,
-  clientRegistry: ClientRegistry = clientRegistryInstance
+// A city losing a citizen when one of its defenders loses (OpenCiv2 `unit_resolve_attack_remove_loser`) is civ2-unit's
+//  `civ2-unit:unit/defeated/city-shrinks`, which also asks for City Walls and the Great Wall. It isn't repeated here,
+//  or a city would lose two.
+export const getRules: (engine?: Engine) => Defeated[] = (
+  engine: Engine = engineInstance
 ): Defeated[] => [
-  // A city whose defender loses an attack loses a citizen, unless the attack came from the sea or the city is a
-  //  person's (the defender's owner) on Chieftain (OpenCiv2 `src/auto/unit_combat.cpp`
-  //  `unit_resolve_attack_remove_loser`, richardpenman/civ2@49f26ec, which looks at the attacker's square). City
-  //  Walls and the Great Wall, which also spare it there, are civ2-city-improvement's and civ2-wonder's, and not yet
-  //  asked.
-  new Defeated(
-    'civ2-city:unit/defeated/shrink-defended-city',
-    new Criterion(
-      (defeated: Unit, by: Unit, action: Action): boolean =>
-        action instanceof Attack &&
-        action.to() === defeated.tile() &&
-        cityRegistry.getByTile(action.to()) !== null
-    ),
-    new Criterion(
-      (defeated: Unit, by: Unit): boolean =>
-        !(by.tile().terrain() instanceof Water)
-    ),
-    new Criterion(
-      (defeated: Unit): boolean =>
-        levelOf(gameDifficultyRegistry) !== 0 ||
-        !isHuman(defeated.player(), clientRegistry)
-    ),
-    new Effect((defeated: Unit, by: Unit, action: Action): void =>
-      cityGrowthRegistry
-        .getByCity(cityRegistry.getByTile(defeated.tile())!)
-        .shrink(action)
-    )
-  ),
   new Defeated(
     'civ2-city:unit/defeated/emit',
     new Effect((defeated: Unit, by: Unit, action: Action): void => {
