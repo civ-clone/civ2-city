@@ -3,6 +3,7 @@ import cityBuildingComplete from './Rules/City/building-complete';
 import cityBuildingHeld from './Rules/City/building-held';
 import cityCanBeWorked from './Rules/City/can-be-worked';
 import cityCaptured from './Rules/City/captured';
+import cityCorruption from './Rules/City/corruption';
 import cityCost from './Rules/City/cost';
 import cityCreated from './Rules/City/created';
 import cityDestroyed from './Rules/City/destroyed';
@@ -42,6 +43,19 @@ export const register = (game: Game): void => {
       game.specialists,
       game.availableSpecialists
     ),
+    ...cityCorruption({
+      cityBuildRegistry: game.cityBuilds,
+      cityImprovementRegistry: game.cityImprovements,
+      cityRegistry: game.cities,
+      clientRegistry: game.clients,
+      gameDifficultyRegistry: game.difficulty,
+      landMassRegistry: game.landMasses,
+      pendingEffectRegistry: game.pendingEffects,
+      playerGovernmentRegistry: game.playerGovernments,
+      playerResearchRegistry: game.playerResearch,
+      tileImprovementRegistry: game.tileImprovements,
+      unitRegistry: game.units,
+    }),
     ...cityCost(
       game.cityGrowth,
       game.playerGovernments,

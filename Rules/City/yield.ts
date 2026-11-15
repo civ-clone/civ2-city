@@ -53,39 +53,6 @@ export const getRules: (
   gameDifficultyRegistry: GameDifficultyRegistry = gameDifficultyRegistryInstance,
   clientRegistry: ClientRegistry = clientRegistryInstance
 ): YieldRule[] => [
-  // Corruption takes from the city's trade (`lib/corruption`), measured from its player's Palace by the world's own
-  //  distance.
-  new YieldRule(
-    'civ2-city:city/yield/corruption',
-    new High(),
-    new Effect((city: City, yields: Yield[]): Yield => {
-      const [capital] = cityImprovementRegistry
-          .filter(
-            (cityImprovement) =>
-              cityImprovement instanceof Palace &&
-              // A Palace is destroyed when its city is captured, but stays registered: it's no one's capital.
-              !cityImprovement.destroyed() &&
-              city.player() === cityImprovement.city().player()
-          )
-          .map((cityImprovement) => cityImprovement.city()),
-        distance = capital
-          ? Math.round(capital.tile().distanceFrom(city.tile()))
-          : null;
-
-      return new Corruption(
-        tradeCorruption({
-          amount: reduceYield(yields, Trade),
-          government: governmentOf(city.player(), playerGovernmentRegistry),
-          distance,
-          human: isHuman(city.player(), clientRegistry),
-          level: levelOf(gameDifficultyRegistry),
-          capital: capital === city,
-        }),
-        distance === null ? 'no-capital' : String(distance)
-      );
-    })
-  ),
-
   new YieldRule(
     'civ2-city:city/yield/worked-tiles',
     new Priority(0), // X High
