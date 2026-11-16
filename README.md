@@ -97,7 +97,6 @@ effective @COSMIC values; the tables by government are civ2-government's, and th
 - **Growth limits and the Granary:** the Aqueduct (8) and Sewer System (12) caps and the Granary's or Pyramids' half
   box are civ2-city-improvement's and civ2-wonder's.
 - **Fanatics** are exempt from support by their class (`base-unit-fanatic`), not by a unit flag or trait.
-- **Defence:** City Walls and the Great Wall don't spare the city yet (civ2-city-improvement, civ2-wonder).
 - **Famine:** Civ2 leaves a computer player's unseen city's settlers alone; this disbands them. No food caravans.
 - **Auto build:** only improvements are scored: Civ2's Wonder and unit scores aren't ported, so units only finds
   nothing, and Wonders rank only by civ2-wonder's own `BuildPriority`. civ2-city-improvement's and civ2-wonder's
