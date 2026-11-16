@@ -37,8 +37,8 @@ export interface CapitalLinkDependencies {
   /** The game's turn: Palaces and links are kept for the turn they were worked out in. */
   turn?: Turn;
   /**
-   * Whether `player` has an alliance with `other` (`TREATY_ALLIANCE`). Civ2 in civ-clone has no alliances yet, so by
-   *  default no one has.
+   * Whether `player` has an alliance with `other` (`TREATY_ALLIANCE`): an ally's cities and units don't block the
+   *  link. No one is allied unless given; civ2-city's corruption rules pass base-diplomacy's alliance.
    */
   allied?: (player: Player, other: Player) => boolean;
 }

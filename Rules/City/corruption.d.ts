@@ -1,4 +1,5 @@
 import CapitalLink, { CapitalLinkDependencies } from '../../lib/capitalLink';
+import InteractionRegistry from '@civ-clone/core-diplomacy/InteractionRegistry';
 import { CityBuildRegistry } from '@civ-clone/core-city-build/CityBuildRegistry';
 import { ClientRegistry } from '@civ-clone/core-client/ClientRegistry';
 import { GameDifficultyRegistry } from '@civ-clone/core-difficulty/GameDifficultyRegistry';
@@ -18,6 +19,12 @@ export interface CorruptionDependencies extends CapitalLinkDependencies {
   gameDifficultyRegistry?: GameDifficultyRegistry;
   pendingEffectRegistry?: PendingEffectRegistry;
   playerGovernmentRegistry?: PlayerGovernmentRegistry;
+  /**
+   * The game's diplomacy: with it, and no `allied` of its own, a player's allies are those it has an alliance with
+   *  (base-diplomacy's `TreatyLevel.Alliance`), whose cities and units don't block its capital link
+   *  (`map_road_connection`).
+   */
+  interactionRegistry?: InteractionRegistry;
   /** The link to share; one is made from the dependencies otherwise. */
   capitalLink?: CapitalLink;
 }

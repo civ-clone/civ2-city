@@ -94,6 +94,7 @@ export const register = (game: Game): void => {
       cityRegistry: game.cities,
       clientRegistry: game.clients,
       gameDifficultyRegistry: game.difficulty,
+      interactionRegistry: game.interactions,
       landMassRegistry: game.landMasses,
       pendingEffectRegistry: game.pendingEffects,
       playerGovernmentRegistry: game.playerGovernments,

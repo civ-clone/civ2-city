@@ -1,4 +1,6 @@
 import CapitalLink, { CapitalLinkDependencies } from '../../lib/capitalLink';
+import InteractionRegistry from '@civ-clone/core-diplomacy/InteractionRegistry';
+import alliedBy from '../../lib/allied';
 import {
   CityBuildRegistry,
   instance as cityBuildRegistryInstance,
@@ -57,6 +59,12 @@ export interface CorruptionDependencies extends CapitalLinkDependencies {
   gameDifficultyRegistry?: GameDifficultyRegistry;
   pendingEffectRegistry?: PendingEffectRegistry;
   playerGovernmentRegistry?: PlayerGovernmentRegistry;
+  /**
+   * The game's diplomacy: with it, and no `allied` of its own, a player's allies are those it has an alliance with
+   *  (base-diplomacy's `TreatyLevel.Alliance`), whose cities and units don't block its capital link
+   *  (`map_road_connection`).
+   */
+  interactionRegistry?: InteractionRegistry;
   /** The link to share; one is made from the dependencies otherwise. */
   capitalLink?: CapitalLink;
 }
@@ -100,7 +108,15 @@ export const getRules = (
       gameDifficultyRegistry = gameDifficultyRegistryInstance,
       pendingEffectRegistry = pendingEffectRegistryInstance,
       playerGovernmentRegistry = playerGovernmentRegistryInstance,
-      capitalLink = new CapitalLink(dependencies),
+      interactionRegistry,
+      capitalLink = new CapitalLink({
+        ...dependencies,
+        allied:
+          dependencies.allied ??
+          (interactionRegistry === undefined
+            ? undefined
+            : alliedBy(interactionRegistry)),
+      }),
     } = dependencies,
     // `City#yields` hands its rules and costs the same array, so the nearest Palace is looked up once a call.
     capitals = new WeakMap<Yield[], ReturnType<CapitalLink['capital']>>(),

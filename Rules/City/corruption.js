@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getRules = void 0;
 const capitalLink_1 = require("../../lib/capitalLink");
+const allied_1 = require("../../lib/allied");
 const CityBuildRegistry_1 = require("@civ-clone/core-city-build/CityBuildRegistry");
 const ClientRegistry_1 = require("@civ-clone/core-client/ClientRegistry");
 const Yields_1 = require("../../Yields");
@@ -51,7 +52,13 @@ const buildingPalace = (city, cityBuildRegistry) => {
  *  the road to it (`lib/capitalLink`).
  */
 const getRules = (dependencies = {}) => {
-    const { cityBuildRegistry = CityBuildRegistry_1.instance, clientRegistry = ClientRegistry_1.instance, gameDifficultyRegistry = GameDifficultyRegistry_1.instance, pendingEffectRegistry = core_pending_effect_1.instance, playerGovernmentRegistry = PlayerGovernmentRegistry_1.instance, capitalLink = new capitalLink_1.default(dependencies), } = dependencies, 
+    var _a;
+    const { cityBuildRegistry = CityBuildRegistry_1.instance, clientRegistry = ClientRegistry_1.instance, gameDifficultyRegistry = GameDifficultyRegistry_1.instance, pendingEffectRegistry = core_pending_effect_1.instance, playerGovernmentRegistry = PlayerGovernmentRegistry_1.instance, interactionRegistry, capitalLink = new capitalLink_1.default({
+        ...dependencies,
+        allied: (_a = dependencies.allied) !== null && _a !== void 0 ? _a : (interactionRegistry === undefined
+            ? undefined
+            : (0, allied_1.default)(interactionRegistry)),
+    }), } = dependencies, 
     // `City#yields` hands its rules and costs the same array, so the nearest Palace is looked up once a call.
     capitals = new WeakMap(), capitalOf = (city, yields) => {
         if (!capitals.has(yields)) {
