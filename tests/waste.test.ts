@@ -36,6 +36,9 @@ import Yield from '@civ-clone/core-yield/Yield';
 import YieldModifier from '@civ-clone/core-city/Rules/YieldModifier';
 import YieldRule from '@civ-clone/core-city/Rules/Yield';
 import corruptionRules from '../Rules/City/corruption';
+import Alliance from '@civ-clone/base-diplomacy-declaration-alliance/Alliance';
+import InteractionRegistry from '@civ-clone/core-diplomacy/InteractionRegistry';
+import Peace from '@civ-clone/base-diplomacy-declaration-peace/Peace';
 import { expect } from 'chai';
 import mapWorld from './lib/mapWorld';
 import processYield from '../Rules/City/process-yield';
@@ -213,7 +216,13 @@ describe('waste in a city', (): void => {
     {
       palace = true,
       building = null,
-    }: { palace?: boolean; building?: unknown } = {}
+      treaty = null,
+    }: {
+      palace?: boolean;
+      building?: unknown;
+      // A rival's unit on the route at (7, 5), and the treaty with it, read through the game's interactions.
+      treaty?: typeof Alliance | typeof Peace | 'none' | null;
+    } = {}
   ) => {
     const ruleRegistry = new RuleRegistry(),
       landMassRegistry = new LandMassRegistry(),
@@ -239,6 +248,9 @@ describe('waste in a city', (): void => {
         landMassRegistry
       ),
       player = new Player(ruleRegistry),
+      rival = new Player(ruleRegistry),
+      interactionRegistry = new InteractionRegistry(),
+      blocker = { player: () => rival, tile: () => world.get(7, 5) },
       city = (x: number): City => {
         const built = new City(player, world.get(x, 5), 'city', ruleRegistry);
 
@@ -255,6 +267,14 @@ describe('waste in a city', (): void => {
 
     if (palace) {
       cityImprovementRegistry.register(new Palace(capital, ruleRegistry));
+    }
+
+    if (treaty === Alliance) {
+      interactionRegistry.register(new Peace(player, rival, ruleRegistry));
+    }
+
+    if (treaty === Alliance || treaty === Peace) {
+      interactionRegistry.register(new treaty(player, rival, ruleRegistry));
     }
 
     ruleRegistry.register(
@@ -289,7 +309,11 @@ describe('waste in a city', (): void => {
         playerResearchRegistry: {
           getByPlayer: () => ({ completed: () => false }),
         } as any,
-        unitRegistry: { getByTile: () => [] } as any,
+        unitRegistry: {
+          getByTile: (tile: unknown) =>
+            treaty !== null && tile === world.get(7, 5) ? [blocker] : [],
+        } as any,
+        ...(treaty === null ? {} : { interactionRegistry }),
         cityBuildRegistry: {
           getByCity: () => ({
             building: () =>
@@ -353,6 +377,24 @@ describe('waste in a city', (): void => {
 
     // 8 × 2 / 3 = 5, / 2 = 2.
     expect(reduceYield(other.yields(), Waste)).equal(-2);
+  });
+
+  it("wastes less along a road through an ally's unit, through the game's interactions, but not a peace partner's", async (): Promise<void> => {
+    const waste = async (treaty: typeof Alliance | typeof Peace | 'none') => {
+      const { other, tileImprovementRegistry, world } = await setUp(Monarchy, {
+        treaty,
+      });
+
+      [3, 4, 5, 6, 7, 8, 9, 10, 11].forEach((x) =>
+        tileImprovementRegistry.register(new Road(world.get(x, 5)))
+      );
+
+      return reduceYield(other.yields(), Waste);
+    };
+
+    expect(await waste(Alliance)).equal(-2);
+    expect(await waste(Peace)).equal(-4);
+    expect(await waste('none')).equal(-4);
   });
 
   it('wastes less with a Courthouse, halving before the link', async (): Promise<void> => {

@@ -48,8 +48,9 @@ effective @COSMIC values; the tables by government are civ2-government's, and th
   `map_road_connection`). The capital is linked 1 to itself, 2 once its player knows Railroad. Another city on the same
   land mass and under 23 squares away walks the pathfinder's one shortest route over land (ties nearer the capital,
   then in Civ2's direction order): 2 if every square stepped on has a railroad, 1 if each has a road, 0 at the first
-  without one, after more than 50 squares, or at another player's city or unit (a barbarian's unit doesn't block). It
-  stops early, linked, at any city of the player's own. On another land mass, an airport at each end gives 1. The cost
+  without one, after more than 50 squares, or at another player's city or unit (a barbarian's unit doesn't block, nor
+  does an ally's city or unit: an alliance in force by base-diplomacy's treaty level, `lib/allied`). It stops early,
+  linked, at any city of the player's own. On another land mass, an airport at each end gives 1. The cost
   grid is kept per capital square until a square's terrain changes; each player's Palaces and each city's link are
   worked out again when a city is founded, captured or destroyed, an improvement is built, or a road or railroad is
   built, pillaged or removed; a unit moving onto or off the route only counts when the link is next worked out.
@@ -86,9 +87,10 @@ effective @COSMIC values; the tables by government are civ2-government's, and th
 
 ## Not yet (Civ2 M2a deviations and gaps)
 
-- **Corruption and waste:** no alliances in civ2 yet, so every other player's city and unit blocks the capital link
-  (`CapitalLink`'s `allied` option). Land masses are the world's as built: Civ2 recounts them when terrain changes. On a
-  hexagonal grid there's no logical square axis, so the distance is the rounded straight line and no road links.
+- **Corruption and waste:** an alliance made or ended during a turn is seen when the link is next worked out, the next
+  turn, as a unit moving onto or off the route is. Land masses are the world's as built: Civ2 recounts them when
+  terrain changes. On a hexagonal grid there's no logical square axis, so the distance is the rounded straight line and
+  no road links.
 - **Capture:** no civil war. Power ranks are taken as the capture starts, not at the start of the turn, and reputation and vendettas
   aren't modelled, so Partisans are never veterans unless a ruleset passes `reputation`/`vendetta`. Not yet: a
   person's captured city starting in disorder under a Republic or Democracy, the captor's new build (Settlers for a

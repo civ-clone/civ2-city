@@ -17,6 +17,12 @@ import RuleRegistry from '@civ-clone/core-rule/RuleRegistry';
 import TileImprovementRegistry from '@civ-clone/core-tile-improvement/TileImprovementRegistry';
 import Unit from '@civ-clone/core-unit/Unit';
 import World from '@civ-clone/core-world/World';
+import Alliance from '@civ-clone/base-diplomacy-declaration-alliance/Alliance';
+import Ceasefire from '@civ-clone/base-diplomacy-declaration-ceasefire/Ceasefire';
+import InteractionRegistry from '@civ-clone/core-diplomacy/InteractionRegistry';
+import Peace from '@civ-clone/base-diplomacy-declaration-peace/Peace';
+import alliedBy from '../lib/allied';
+import { Never } from '@civ-clone/core-diplomacy/Expiries';
 import { expect } from 'chai';
 import { instanceOf } from './lib/stubs';
 import mapWorld from './lib/mapWorld';
@@ -42,7 +48,14 @@ describe('CapitalLink', (): void => {
       railroadKnown = false,
       allied = false,
       topologyId = 'square',
-    }: { railroadKnown?: boolean; allied?: boolean; topologyId?: string } = {}
+      treaty,
+    }: {
+      railroadKnown?: boolean;
+      allied?: boolean;
+      topologyId?: string;
+      // A real treaty between the player and the rival, read through `lib/allied` as civ2-city's rules do.
+      treaty?: typeof Peace | typeof Ceasefire;
+    } = {}
   ) => {
     // Each `link.of` in these tests asks about the squares as they are then: a turn of its own (`nextTurn`).
     const turnValue = { value: 1 },
@@ -60,6 +73,7 @@ describe('CapitalLink', (): void => {
       }),
       player = new Player(ruleRegistry),
       rival = new Player(ruleRegistry),
+      interactionRegistry = new InteractionRegistry(),
       barbarian = instanceOf(Player, {
         civilization: () => instanceOf(Barbarian),
       }),
@@ -75,7 +89,8 @@ describe('CapitalLink', (): void => {
           getByTile: (tile: unknown) =>
             units.filter((unit) => unit.tile() === tile),
         } as any,
-        allied: () => allied,
+        allied:
+          treaty === undefined ? () => allied : alliedBy(interactionRegistry),
         turn: { value: () => turnValue.value } as any,
       }),
       city = (x: number, y: number, owner: Player = player): City => {
@@ -113,6 +128,12 @@ describe('CapitalLink', (): void => {
       },
       range = (from: number, to: number): number[] =>
         new Array(to - from + 1).fill(0).map((_, i) => from + i);
+
+    if (treaty !== undefined) {
+      interactionRegistry.register(
+        new treaty(player, rival, new Never(), ruleRegistry)
+      );
+    }
 
     const of = link.of.bind(link);
 
@@ -313,6 +334,33 @@ describe('CapitalLink', (): void => {
       allied.unit(4, 5, allied.rival);
 
       expect(allied.link.of(alliedOther).link).equal(1);
+    });
+
+    it("isn't blocked by an ally's city or unit, by base-diplomacy's alliance, but is by a peace or ceasefire partner's", async (): Promise<void> => {
+      for (const [treaty, expected] of [
+        [Alliance, 1],
+        [Peace, 0],
+        [Ceasefire, 0],
+      ] as const) {
+        for (const what of ['city', 'unit'] as const) {
+          const set = await setUp(corridor, { treaty }),
+            capital = set.city(2, 5),
+            other = set.city(8, 5);
+
+          set.improve(capital, Palace);
+          set.road(5, 3, 4, 5, 6, 7);
+
+          if (what === 'city') {
+            set.city(5, 5, set.rival);
+          } else {
+            set.unit(5, 5, set.rival);
+          }
+
+          expect(set.link.of(other).link, `${treaty.name} ${what}`).equal(
+            expected
+          );
+        }
+      }
     });
 
     it('gives up at a distance of 23', async (): Promise<void> => {
