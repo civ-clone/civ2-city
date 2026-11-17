@@ -4,6 +4,7 @@ exports.register = void 0;
 const core_game_1 = require("@civ-clone/core-game");
 const auto_build_1 = require("./Rules/City/auto-build");
 const build_priority_1 = require("./Rules/City/build-priority");
+const building_cancelled_1 = require("./Rules/City/building-cancelled");
 const building_complete_1 = require("./Rules/City/building-complete");
 const build_1 = require("./Rules/City/build");
 const building_held_1 = require("./Rules/City/building-held");
@@ -52,7 +53,7 @@ const register = (game) => {
         unitRegistry: game.units,
         allied: (0, allied_1.default)(game.interactions),
     });
-    game.rules.register(...(0, building_complete_1.default)(game.engine), ...(0, building_held_1.default)(game.engine), ...(0, auto_build_1.default)({
+    game.rules.register(...(0, building_cancelled_1.default)(game.engine), ...(0, building_complete_1.default)(game.engine), ...(0, building_held_1.default)(game.engine), ...(0, auto_build_1.default)({
         cityBuildRegistry: game.cityBuilds,
         cityRegistry: game.cities,
         pendingEffectRegistry: game.pendingEffects,

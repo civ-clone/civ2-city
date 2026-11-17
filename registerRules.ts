@@ -1,6 +1,7 @@
 import { Game, defaultGame } from '@civ-clone/core-game';
 import cityAutoBuild from './Rules/City/auto-build';
 import cityBuildPriority from './Rules/City/build-priority';
+import cityBuildingCancelled from './Rules/City/building-cancelled';
 import cityBuildingComplete from './Rules/City/building-complete';
 import cityBuild from './Rules/City/build';
 import cityBuildingHeld from './Rules/City/building-held';
@@ -53,6 +54,7 @@ export const register = (game: Game): void => {
   });
 
   game.rules.register(
+    ...cityBuildingCancelled(game.engine),
     ...cityBuildingComplete(game.engine),
     ...cityBuildingHeld(game.engine),
     ...cityAutoBuild({
