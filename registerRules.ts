@@ -195,6 +195,7 @@ export const register = (game: Game): void => {
     ...cityTradeRoutes({
       capitalLink,
       pendingEffectRegistry: game.pendingEffects,
+      ruleRegistry: game.rules,
       tradeRouteRegistry: game.tradeRoutes,
     }),
     ...cityTileReassigned(

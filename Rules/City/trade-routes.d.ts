@@ -1,5 +1,6 @@
 import { PendingEffectRegistry } from '@civ-clone/core-pending-effect';
 import { TradeRouteRegistry } from '@civ-clone/core-city/TradeRouteRegistry';
+import { RuleRegistry } from '@civ-clone/core-rule/RuleRegistry';
 import CapitalLink from '../../lib/capitalLink';
 import Captured from '@civ-clone/core-city/Rules/Captured';
 import Destroyed from '@civ-clone/core-city/Rules/Destroyed';
@@ -14,6 +15,8 @@ export interface TradeRouteRuleDependencies {
   capitalLink: CapitalLink;
   /** Where each city's base trade is kept (`lib/baseTrade`). */
   pendingEffectRegistry?: PendingEffectRegistry;
+  /** The rules every city's yields run, which the route income rule continues for the city's own base trade. */
+  ruleRegistry?: RuleRegistry;
   tradeRouteRegistry?: TradeRouteRegistry;
 }
 /**
@@ -25,6 +28,7 @@ export interface TradeRouteRuleDependencies {
 export declare const getRules: ({
   capitalLink,
   pendingEffectRegistry,
+  ruleRegistry,
   tradeRouteRegistry,
 }: TradeRouteRuleDependencies) => (
   | YieldRule

@@ -16,7 +16,20 @@ import CityImprovementRegistry from '@civ-clone/core-city-improvement/CityImprov
 import CityRegistry from '@civ-clone/core-city/CityRegistry';
 import Effect from '@civ-clone/core-rule/Effect';
 import LandMassRegistry from '@civ-clone/core-world/LandMassRegistry';
-import { Monarchy } from '@civ-clone/civ2-government/Governments';
+import {
+  Communism,
+  Democracy,
+  Despotism,
+  Fundamentalism,
+  Monarchy,
+  Republic,
+} from '@civ-clone/civ2-government/Governments';
+import Courthouse from '@civ-clone/base-city-improvement-courthouse/Courthouse';
+import Criterion from '@civ-clone/core-rule/Criterion';
+import Government from '@civ-clone/core-government/Government';
+import { LEADER_CELEBRATION } from '../lib/celebrating';
+import Rule from '@civ-clone/core-rule/Rule';
+import { reduceYield } from '@civ-clone/core-yield/lib/reduceYields';
 import Palace from '@civ-clone/base-city-improvement-palace/Palace';
 import Player from '@civ-clone/core-player/Player';
 import Priority from '@civ-clone/core-rule/Priority';
@@ -38,7 +51,15 @@ import tradeRouteRules from '../Rules/City/trade-routes';
 //  `city_calc_trade_happiness` (`src/auto/city.cpp:3660-3700`) and the `base_trade` kept by `city_process_turn`'s
 //  `city_recalc` (`:4470`), richardpenman/civ2@e39fe7b.
 describe('trade routes with corruption', (): void => {
-  const setUp = async (pendingEffectRegistry = new PendingEffectRegistry()) => {
+  const setUp = async (
+    pendingEffectRegistry = new PendingEffectRegistry(),
+    {
+      government = Monarchy as typeof Government,
+      human = false,
+      level = 0,
+      extraRules = [] as Rule<any, any>[],
+    } = {}
+  ) => {
     const ruleRegistry = new RuleRegistry(),
       landMassRegistry = new LandMassRegistry(),
       cityRegistry = new CityRegistry(),
@@ -94,9 +115,9 @@ describe('trade routes with corruption', (): void => {
         landMassRegistry,
         tileImprovementRegistry,
         pendingEffectRegistry,
-        playerGovernmentRegistry: governedBy(Monarchy),
-        gameDifficultyRegistry: atLevel(0),
-        clientRegistry: playedBy(),
+        playerGovernmentRegistry: governedBy(government),
+        gameDifficultyRegistry: atLevel(level),
+        clientRegistry: human ? playedBy(player, rival) : playedBy(),
         turn,
         cityBuildRegistry: {
           getByCity: () => ({ building: () => null }),
@@ -105,8 +126,10 @@ describe('trade routes with corruption', (): void => {
       ...tradeRouteRules({
         capitalLink,
         pendingEffectRegistry,
+        ruleRegistry,
         tradeRouteRegistry,
-      })
+      }),
+      ...extraRules
     );
 
     const total = (yields: Yield[], Type: typeof Yield) =>
@@ -138,6 +161,8 @@ describe('trade routes with corruption', (): void => {
       };
 
     return {
+      cityImprovementRegistry,
+      ruleRegistry,
       capital,
       near,
       far,
@@ -297,5 +322,120 @@ describe('trade routes with corruption', (): void => {
     expect(baseTradeOf(far, { pendingEffectRegistry })).equal(
       liveBaseTrade(far)
     );
+  });
+
+  // The route income rule works the city's own base trade out by continuing its own pipeline from where the rule
+  //  stands; processing keeps that value. It must be what a whole pipeline of its own gives (`liveBaseTrade`), whatever
+  //  the government, distance, celebration, Courthouse or later rule.
+  describe("the city's own base trade, worked out inside its pipeline", (): void => {
+    // A Courthouse's halving as civ2-city-improvement registers it (`Priority(1500)`), after corruption.
+    const courthouse = (cityImprovementRegistry: CityImprovementRegistry) =>
+        new YieldRule(
+          'test:courthouse',
+          new Priority(1500),
+          new Criterion((city: City): boolean =>
+            cityImprovementRegistry
+              .getByCity(city)
+              .some((improvement) => improvement instanceof Courthouse)
+          ),
+          new Criterion(
+            (city: City, yields: Yield[]): boolean =>
+              reduceYield(yields, Corruption) < 0
+          ),
+          new Effect(
+            (city: City, yields: Yield[]): Yield =>
+              new Corruption(Math.floor(reduceYield(yields, Corruption) / 2))
+          )
+        ),
+      // A later rule that changes an earlier yield in place, which the continuation must not do to the real pipeline.
+      inPlace = new YieldRule(
+        'test:in-place',
+        new Priority(1800),
+        new Effect((city: City, yields: Yield[]): void => {
+          yields
+            .filter((cityYield) => cityYield instanceof Trade)
+            .slice(0, 1)
+            .forEach((cityYield) => cityYield.add(1, 'in-place'));
+        })
+      ),
+      check = async (
+        description: string,
+        options: Parameters<typeof setUp>[1],
+        prepare: (set: Awaited<ReturnType<typeof setUp>>) => void = () => {}
+      ) => {
+        const pendingEffectRegistry = new PendingEffectRegistry(),
+          set = await setUp(pendingEffectRegistry, options);
+
+        prepare(set);
+
+        const { near, far, processTrade } = set,
+          before = near.yields().map((cityYield) => cityYield.value());
+
+        [near, far].forEach((city) => {
+          const live = liveBaseTrade(city);
+
+          processTrade(city);
+
+          expect(
+            storedBaseTrade(city, { pendingEffectRegistry }),
+            `${description}: ${city.name()}`
+          ).equal(live);
+        });
+
+        // Asking again gives the same: the continuation changed nothing of the city's own yields.
+        expect(
+          near.yields().map((cityYield) => cityYield.value()),
+          description
+        ).eql(before);
+      };
+
+    it('matches under every government, a person on Deity, and at no corruption', async (): Promise<void> => {
+      for (const government of [
+        Despotism,
+        Monarchy,
+        Communism,
+        Fundamentalism,
+        Republic,
+        Democracy,
+      ]) {
+        await check(government.name, { government });
+        await check(`${government.name}, a person on Deity`, {
+          government,
+          human: true,
+          level: 5,
+        });
+      }
+    });
+
+    it('matches with a Courthouse halving corruption after it, celebrating, and a later rule changing a yield in place', async (): Promise<void> => {
+      await check(
+        'Courthouse',
+        {
+          extraRules: [],
+        },
+        ({ cityImprovementRegistry, ruleRegistry, near, far }) => {
+          ruleRegistry.register(courthouse(cityImprovementRegistry));
+          [near, far].forEach((city) =>
+            cityImprovementRegistry.register(new Courthouse(city, ruleRegistry))
+          );
+        }
+      );
+      await check('celebrating', {}, ({ pendingEffectRegistry, near, far }) =>
+        [near, far].forEach((city) =>
+          pendingEffectRegistry.register(
+            new PendingEffect(LEADER_CELEBRATION, city)
+          )
+        )
+      );
+      await check('in place', { extraRules: [inPlace] }, ({ near }) =>
+        // The squares' 30, changed in place once by the real pipeline, not again by the continuation.
+        expect(
+          near
+            .yields()
+            .find((cityYield) => cityYield instanceof Trade)!
+            .value()
+        ).equal(31)
+      );
+    });
   });
 });
