@@ -26,6 +26,12 @@ const tile_worked_1 = require("./Rules/City/tile-worked");
 const specialist_available_1 = require("./Rules/City/specialist-available");
 const tile_yield_1 = require("./Rules/City/tile-yield");
 const tiles_1 = require("./Rules/City/tiles");
+const trade_routes_1 = require("./Rules/City/trade-routes");
+const capitalLink_1 = require("./lib/capitalLink");
+const allied_1 = require("./lib/allied");
+const incited_1 = require("./Rules/City/incited");
+const dependenciesOf_1 = require("@civ-clone/civ2-diplomacy/lib/dependenciesOf");
+const trade_route_established_1 = require("./Rules/Unit/trade-route-established");
 const yield_1 = require("./Rules/City/yield");
 const action_1 = require("./Rules/Player/action");
 const turn_start_1 = require("./Rules/Player/turn-start");
@@ -35,6 +41,17 @@ const moved_1 = require("./Rules/Unit/moved");
 const unsupported_1 = require("./Rules/Unit/unsupported");
 const register = (game) => {
     (0, registerAvailableSpecialists_1.default)(game.availableSpecialists);
+    // One capital link for corruption and the trade routes: the corruption rules keep it up to date.
+    const capitalLink = new capitalLink_1.default({
+        cityImprovementRegistry: game.cityImprovements,
+        cityRegistry: game.cities,
+        landMassRegistry: game.landMasses,
+        playerResearchRegistry: game.playerResearch,
+        tileImprovementRegistry: game.tileImprovements,
+        turn: game.turn,
+        unitRegistry: game.units,
+        allied: (0, allied_1.default)(game.interactions),
+    });
     game.rules.register(...(0, building_complete_1.default)(game.engine), ...(0, building_held_1.default)(game.engine), ...(0, auto_build_1.default)({
         cityBuildRegistry: game.cityBuilds,
         cityRegistry: game.cities,
@@ -73,6 +90,7 @@ const register = (game) => {
         pendingEffectRegistry: game.pendingEffects,
         turn: game.turn,
     }), ...(0, corruption_1.default)({
+        capitalLink,
         cityBuildRegistry: game.cityBuilds,
         cityImprovementRegistry: game.cityImprovements,
         cityRegistry: game.cities,
@@ -86,6 +104,10 @@ const register = (game) => {
         tileImprovementRegistry: game.tileImprovements,
         turn: game.turn,
         unitRegistry: game.units,
+    }), ...(0, incited_1.default)({
+        diplomacy: (0, dependenciesOf_1.default)(game),
+        engine: game.engine,
+        randomNumberGenerator: game.rng,
     }), ...(0, cost_1.default)(game.cityGrowth, game.playerGovernments, game.units, game.rules), ...(0, created_1.default)(game.tileImprovements, game.cityBuilds, game.cityGrowth, game.cities, game.playerWorlds, game.rules, game.availableCityBuildItems, game.engine, game.workedTiles, game.specialists, game.availableSpecialists), ...(0, destroyed_1.default)(game.tileImprovements, game.engine, game.units, game.workedTiles, game.specialists, game.rules, game.pendingEffects), ...(0, food_exhausted_1.default)(game.engine), ...(0, food_storage_1.default)(game.rules), ...(0, grow_1.default)(game.cityGrowth, game.playerWorlds, game.workedTiles, game.specialists, game.availableSpecialists, game.engine), ...(0, growth_cost_1.default)(game.difficulty, game.clients, {
         cityImprovementRegistry: game.cityImprovements,
         playerRegistry: game.players,
@@ -93,7 +115,21 @@ const register = (game) => {
         ruleRegistry: game.rules,
         turn: game.turn,
         wonderRegistry: game.wonders,
-    }), ...(0, process_yield_1.default)(game.cityBuilds, game.cityGrowth, game.units, game.rules, game.playerTreasuries, game.playerGovernments), ...(0, build_1.default)(game.clients, game.difficulty, game.rules), ...(0, specialist_available_1.default)(game.cityGrowth), ...(0, renamed_1.default)(game.cityNames), ...(0, shrink_1.default)(game.workedTiles, game.specialists, game.engine), ...(0, tile_yield_1.default)(game.tileImprovements, game.playerGovernments, game.playerResearch, game.pendingEffects), ...(0, tiles_1.default)(), ...(0, tile_reassigned_1.default)(game.playerWorlds, game.cityGrowth, game.workedTiles, game.specialists, game.availableSpecialists), ...(0, tile_released_1.default)(game.engine), ...(0, tile_worked_1.default)(game.engine), ...(0, yield_1.default)(game.cityImprovements, game.playerGovernments, game.specialists, game.difficulty, game.clients), ...(0, action_1.default)(game.cityBuilds, game.cities, game.specialists), ...(0, turn_start_1.default)(game.cities, game.units, game.workedTiles, game.rules), ...(0, defeated_1.default)(game.engine), ...(0, moved_1.default)(game.rules, game.workedTiles), ...(0, unsupported_1.default)());
+    }), ...(0, process_yield_1.default)(game.cityBuilds, game.cityGrowth, game.units, game.rules, game.playerTreasuries, game.playerGovernments), ...(0, build_1.default)(game.clients, game.difficulty, game.rules), ...(0, specialist_available_1.default)(game.cityGrowth), ...(0, renamed_1.default)(game.cityNames), ...(0, shrink_1.default)(game.workedTiles, game.specialists, game.engine), ...(0, tile_yield_1.default)(game.tileImprovements, game.playerGovernments, game.playerResearch, game.pendingEffects), ...(0, tiles_1.default)(), ...(0, trade_routes_1.default)({
+        capitalLink,
+        tradeRouteRegistry: game.tradeRoutes,
+    }), ...(0, tile_reassigned_1.default)(game.playerWorlds, game.cityGrowth, game.workedTiles, game.specialists, game.availableSpecialists), ...(0, tile_released_1.default)(game.engine), ...(0, tile_worked_1.default)(game.engine), ...(0, yield_1.default)(game.cityImprovements, game.playerGovernments, game.specialists, game.difficulty, game.clients), ...(0, action_1.default)(game.cityBuilds, game.cities, game.specialists), ...(0, turn_start_1.default)(game.cities, game.units, game.workedTiles, game.rules), ...(0, defeated_1.default)(game.engine), ...(0, trade_route_established_1.default)({
+        capitalLink,
+        cityRegistry: game.cities,
+        engine: game.engine,
+        interactionRegistry: game.interactions,
+        playerResearchRegistry: game.playerResearch,
+        playerTreasuryRegistry: game.playerTreasuries,
+        randomNumberGenerator: game.rng,
+        ruleRegistry: game.rules,
+        tradeRouteRegistry: game.tradeRoutes,
+        turn: game.turn,
+    }), ...(0, moved_1.default)(game.rules, game.workedTiles), ...(0, unsupported_1.default)());
 };
 exports.register = register;
 // The plugin loader imports each package for this side effect. Until it passes a `Game` of its own, dropping it would

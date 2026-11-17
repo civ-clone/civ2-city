@@ -140,10 +140,13 @@ describe('register', (): void => {
     ]);
   });
 
-  it('loads no civ1-* or library-* module', (): void => {
+  // library-diplomacy's declarations (`Vendetta`) are civ2-diplomacy's own, which the incite rules call.
+  it('loads no civ1-* or library-* module but library-diplomacy', (): void => {
     expect(
-      Object.keys(require.cache).filter((path) =>
-        /@civ-clone[\\/+](civ1|library)-/.test(path)
+      Object.keys(require.cache).filter(
+        (path) =>
+          /@civ-clone[\\/+](civ1|library)-/.test(path) &&
+          !/@civ-clone[\\/+]library-diplomacy[@\\/]/.test(path)
       )
     ).eql([]);
   });
