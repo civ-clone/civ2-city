@@ -39,6 +39,9 @@ effective @COSMIC values; the tables by government are civ2-government's, and th
   @COSMIC's distance; a person's cities under Anarchy and Despotism add the level (up to 32); halved in the Palace's
   city; none under Fundamentalism and Democracy. A celebrating city (`lib/celebrating`) counts its government one step
   up, for the divisor and the level. The Courthouse's halving of trade corruption is civ2-city-improvement's.
+- **Terms for players to compare** (`Rules/Government/terms`): the tile penalty, the trade bonus and trade corruption
+  of each government, for a city that isn't celebrating, as base-government-terms' `GovernmentTerms`, for a computer
+  player choosing its government. No rule here asks them.
 - **Shield waste** (`lib/corruption`'s `shieldWaste`, the `Waste` yield, a negative `Production`): the same formula on
   the shields less their support (after the Factory's and plants' bonuses), the distance counting at most 16, halved by
   the Palace or a Courthouse, times (3 − link) / 3, over (government ÷ 2) + 1, each rounded down. None for the
