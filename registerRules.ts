@@ -23,6 +23,12 @@ import cityTileWorked from './Rules/City/tile-worked';
 import citySpecialistAvailable from './Rules/City/specialist-available';
 import cityTileYield from './Rules/City/tile-yield';
 import cityTiles from './Rules/City/tiles';
+import cityTradeRoutes from './Rules/City/trade-routes';
+import CapitalLink from './lib/capitalLink';
+import alliedBy from './lib/allied';
+import cityIncited from './Rules/City/incited';
+import dependenciesOf from '@civ-clone/civ2-diplomacy/lib/dependenciesOf';
+import unitTradeRouteEstablished from './Rules/Unit/trade-route-established';
 import cityYield from './Rules/City/yield';
 import playerAction from './Rules/Player/action';
 import playerTurnStart from './Rules/Player/turn-start';
@@ -33,6 +39,18 @@ import unitUnsupported from './Rules/Unit/unsupported';
 
 export const register = (game: Game): void => {
   registerAvailableSpecialists(game.availableSpecialists);
+
+  // One capital link for corruption and the trade routes: the corruption rules keep it up to date.
+  const capitalLink = new CapitalLink({
+    cityImprovementRegistry: game.cityImprovements,
+    cityRegistry: game.cities,
+    landMassRegistry: game.landMasses,
+    playerResearchRegistry: game.playerResearch,
+    tileImprovementRegistry: game.tileImprovements,
+    turn: game.turn,
+    unitRegistry: game.units,
+    allied: alliedBy(game.interactions),
+  });
 
   game.rules.register(
     ...cityBuildingComplete(game.engine),
@@ -89,6 +107,7 @@ export const register = (game: Game): void => {
       }
     ),
     ...cityCorruption({
+      capitalLink,
       cityBuildRegistry: game.cityBuilds,
       cityImprovementRegistry: game.cityImprovements,
       cityRegistry: game.cities,
@@ -102,6 +121,11 @@ export const register = (game: Game): void => {
       tileImprovementRegistry: game.tileImprovements,
       turn: game.turn,
       unitRegistry: game.units,
+    }),
+    ...cityIncited({
+      diplomacy: dependenciesOf(game),
+      engine: game.engine,
+      randomNumberGenerator: game.rng,
     }),
     ...cityCost(
       game.cityGrowth,
@@ -168,6 +192,11 @@ export const register = (game: Game): void => {
       game.pendingEffects
     ),
     ...cityTiles(),
+    ...cityTradeRoutes({
+      capitalLink,
+      pendingEffectRegistry: game.pendingEffects,
+      tradeRouteRegistry: game.tradeRoutes,
+    }),
     ...cityTileReassigned(
       game.playerWorlds,
       game.cityGrowth,
@@ -187,6 +216,19 @@ export const register = (game: Game): void => {
     ...playerAction(game.cityBuilds, game.cities, game.specialists),
     ...playerTurnStart(game.cities, game.units, game.workedTiles, game.rules),
     ...unitDefeated(game.engine),
+    ...unitTradeRouteEstablished({
+      capitalLink,
+      cityRegistry: game.cities,
+      engine: game.engine,
+      interactionRegistry: game.interactions,
+      pendingEffectRegistry: game.pendingEffects,
+      playerResearchRegistry: game.playerResearch,
+      playerTreasuryRegistry: game.playerTreasuries,
+      randomNumberGenerator: game.rng,
+      ruleRegistry: game.rules,
+      tradeRouteRegistry: game.tradeRoutes,
+      turn: game.turn,
+    }),
     ...unitMoved(game.rules, game.workedTiles),
     ...unitUnsupported()
   );

@@ -71,6 +71,23 @@ effective @COSMIC values; the tables by government are civ2-government's, and th
     a captor without Guerrilla Warfare or +1 against one with it. Each goes fortified to the best free land square of
     the city's 20 (terrain defence × 2, +1 road, +1 railroad, × 2 fortress), Civ2's square order on a tie. Emits
     `city:partisans` (city, loser, units, captor).
+- **Incite** (`Rules/City/incited`): a city captured by `InciteRevolt` raises an incident and a forced war (civ2-
+  diplomacy's `incited`); by `SubvertCity` (the doubled price under a treaty) the victim holds a vendetta instead. The
+  rule that captures the city calls `inciterBecomesFounder` first at the doubled price, so the capture is a liberation.
+  Any capture with a person on either side (not a Barbarian) sets civ2-diplomacy's `INCIDENT` both ways.
+- **Trade routes** (`Rules/City/trade-routes`, `Rules/Unit/trade-route-established`, numbers in `lib/tradeRoutes`):
+  - **Income** each turn per route: (both cities' trade after corruption, without routes, + 4) >> 3, plus link ×
+    value / 2 (the road link from `CapitalLink.connection`, at least 1 with Airports in both, +1 for this city's
+    Superhighways), halved for an own partner; before corruption, which is worked out on the total. Each route's
+    `Trade` is tagged with the partner's id. This city's base trade is worked out each time; a partner's is the one
+    it kept at its last processing (`lib/baseTrade`).
+  - **Delivery** (base-unit-action-establish-trade-route's `TradeRouteEstablished`): the bonus of
+    `unit_caravan_trade_revenue` in gold and as much in research, 10 warmer attitudes both ways (civ2-diplomacy), and
+    a route each way. A unit with no home runs from its player's nearest city (`tradeRouteHome`). Emits
+    `unit:trade-route-established` (player, home, city, goods, bonus).
+  - **Slots:** three a city (`TradeRouteLimit`); a full city replaces its weakest route (the partner's trade with the
+    link and Airports, halved if its own) when worth no more than the new partner's trade, the first on a tie.
+  - A destroyed city's routes go both ways; a captured city keeps them.
 - **Auto build** (`lib/autoMode`, `Rules/City/auto-build`, `Rules/City/build-priority`, scores in
   `lib/chooseProduction`, the survey in `lib/chooseProductionState`): `setAutoMode(cityBuild, mode)` puts a city on Auto
   for anything, units only or improvements only (`'any'`, `'units'`, `'improvements'`; `null` takes it off), and
@@ -106,4 +123,13 @@ effective @COSMIC values; the tables by government are civ2-government's, and th
   so an Auto city can choose what Civ2 wouldn't, and seldom finds nothing. No CITYPREF.TXT list. The AI's continent policy (`continent_policy`, 5 assumed), reputation, vendettas,
   power ranks (the first person stands for `best_human_rank`), subversion, the spaceship race and the AEGIS Cruiser
   aren't kept, so their terms are left out; "next to the ocean" is any ocean, not ocean body 1.
-- **Trade routes:** none in M2a.
+- **Trade routes:** goods are names only (`lib/tradeRoutes`'s 16 keys, picked by the unit's id): no supply or demand,
+  so the demand bonus is never paid, and a city keeps one route per partner each way (the original keeps a second one
+  carrying other goods). No food caravans. A homeless unit's nearest city is by the world's distance, and a unit whose player has no city earns
+  nothing (the original falls back on city 0); a route never joins a city to itself. The −10 attitude both ways is
+  only for players who have met (the original adjusts it regardless); entering the city makes contact first. Each
+  city's base trade (`base_trade`) is kept, and saved, only when its yields are processed at the start of its
+  player's turn and when it is captured; a deviation on purpose, as the original rewrites it on every `city_recalc`
+  (a window opened or a unit moved included), which would make what a route earns depend on what is looked at. So a
+  partner's change during a turn counts from its next processing; a city not yet processed has it worked out when
+  read.
