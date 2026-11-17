@@ -15,10 +15,12 @@ import {
 import { routeIncome, tradeRoutesPerCity } from '../../lib/tradeRoutes';
 import Airport from '@civ-clone/base-city-improvement-airport/Airport';
 import CapitalLink from '../../lib/capitalLink';
+import Captured from '@civ-clone/core-city/Rules/Captured';
 import City from '@civ-clone/core-city/City';
 import Criterion from '@civ-clone/core-rule/Criterion';
 import Destroyed from '@civ-clone/core-city/Rules/Destroyed';
 import Effect from '@civ-clone/core-rule/Effect';
+import { Low } from '@civ-clone/core-rule/Priorities';
 import Priority from '@civ-clone/core-rule/Priority';
 import ProcessYield from '@civ-clone/core-city/Rules/ProcessYield';
 import Superhighways from '@civ-clone/base-city-improvement-superhighways/Superhighways';
@@ -54,6 +56,7 @@ export const getRules = ({
 }: TradeRouteRuleDependencies): (
   | YieldRule
   | ProcessYield
+  | Captured
   | TradeRouteLimit
   | Destroyed
 )[] => [
@@ -100,6 +103,20 @@ export const getRules = ({
     'civ2-city:city/process-yield/base-trade',
     new Criterion((cityYield: Yield): boolean => cityYield instanceof Trade),
     new Effect((cityYield: Yield, city: City): void => {
+      storeBaseTrade(city, { pendingEffectRegistry });
+    })
+  ),
+
+  // A captured city's base trade is kept again at once, under its new owner's corruption (`city_capture_aftermath`
+  //  recalculates the city), after every other rule of the capture; one the capture destroyed has none.
+  new Captured(
+    'civ2-city:city/captured/base-trade',
+    new Low(),
+    new Effect((city: City): void => {
+      if (city.destroyed()) {
+        return;
+      }
+
       storeBaseTrade(city, { pendingEffectRegistry });
     })
   ),

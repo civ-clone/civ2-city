@@ -6,9 +6,11 @@ const TradeRouteRegistry_1 = require("@civ-clone/core-city/TradeRouteRegistry");
 const baseTrade_1 = require("../../lib/baseTrade");
 const tradeRoutes_1 = require("../../lib/tradeRoutes");
 const Airport_1 = require("@civ-clone/base-city-improvement-airport/Airport");
+const Captured_1 = require("@civ-clone/core-city/Rules/Captured");
 const Criterion_1 = require("@civ-clone/core-rule/Criterion");
 const Destroyed_1 = require("@civ-clone/core-city/Rules/Destroyed");
 const Effect_1 = require("@civ-clone/core-rule/Effect");
+const Priorities_1 = require("@civ-clone/core-rule/Priorities");
 const Priority_1 = require("@civ-clone/core-rule/Priority");
 const ProcessYield_1 = require("@civ-clone/core-city/Rules/ProcessYield");
 const Superhighways_1 = require("@civ-clone/base-city-improvement-superhighways/Superhighways");
@@ -46,6 +48,14 @@ const getRules = ({ capitalLink, pendingEffectRegistry = core_pending_effect_1.i
     // `city_process_turn`'s `city_recalc` (`city.cpp:4470`) keeps the city's `base_trade`: here, as its trade is
     //  processed at the start of its player's turn, and nowhere else.
     new ProcessYield_1.default('civ2-city:city/process-yield/base-trade', new Criterion_1.default((cityYield) => cityYield instanceof Yields_1.Trade), new Effect_1.default((cityYield, city) => {
+        (0, baseTrade_1.storeBaseTrade)(city, { pendingEffectRegistry });
+    })),
+    // A captured city's base trade is kept again at once, under its new owner's corruption (`city_capture_aftermath`
+    //  recalculates the city), after every other rule of the capture; one the capture destroyed has none.
+    new Captured_1.default('civ2-city:city/captured/base-trade', new Priorities_1.Low(), new Effect_1.default((city) => {
+        if (city.destroyed()) {
+            return;
+        }
         (0, baseTrade_1.storeBaseTrade)(city, { pendingEffectRegistry });
     })),
     new TradeRouteLimit_1.default('civ2-city:city/trade-route-limit', new Effect_1.default(() => tradeRoutes_1.tradeRoutesPerCity)),

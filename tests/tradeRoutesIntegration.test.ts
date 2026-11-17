@@ -1,4 +1,9 @@
-import { BASE_TRADE, storedBaseTrade } from '../lib/baseTrade';
+import {
+  BASE_TRADE,
+  baseTradeOf,
+  liveBaseTrade,
+  storedBaseTrade,
+} from '../lib/baseTrade';
 import { Corruption, Trade } from '../Yields';
 import {
   PendingEffect,
@@ -263,5 +268,34 @@ describe('trade routes with corruption', (): void => {
     playing.far.destroy(null as any);
     expect(playing.pendingEffectRegistry.entries()).eql([]);
     expect(playing.tradeRouteRegistry.entries()).eql([]);
+  });
+
+  it("keeps a captured city's base trade again at once, under its new owner's corruption", async (): Promise<void> => {
+    const { near, far, processTrade, pendingEffectRegistry } = await setUp();
+
+    processTrade(far);
+    expect(storedBaseTrade(far, { pendingEffectRegistry })).equal(10);
+
+    // Taken by the player whose capital is 26 squares away, not the rival with no Palace.
+    far.capture(near.player());
+
+    const kept = storedBaseTrade(far, { pendingEffectRegistry });
+
+    expect(kept).equal(liveBaseTrade(far));
+    expect(kept).not.equal(10);
+    expect(pendingEffectRegistry.entries().length).equal(1);
+  });
+
+  it('reads a kept value that is not a finite number as none, and works it out live', async (): Promise<void> => {
+    const { far, pendingEffectRegistry } = await setUp();
+
+    pendingEffectRegistry.register(
+      new PendingEffect(BASE_TRADE, far, { value: 'not a number' })
+    );
+
+    expect(storedBaseTrade(far, { pendingEffectRegistry })).null;
+    expect(baseTradeOf(far, { pendingEffectRegistry })).equal(
+      liveBaseTrade(far)
+    );
   });
 });

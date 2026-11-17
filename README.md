@@ -129,6 +129,7 @@ effective @COSMIC values; the tables by government are civ2-government's, and th
   nothing (the original falls back on city 0); a route never joins a city to itself. The −10 attitude both ways is
   only for players who have met (the original adjusts it regardless); entering the city makes contact first. Each
   city's base trade (`base_trade`) is kept, and saved, only when its yields are processed at the start of its
-  player's turn (the original also keeps it at every other `city_recalc`, a window opened included); a city not yet
-  processed has it worked out when read. So a partner's change during a turn counts from its next processing, as in
-  the original; a just-founded city's counts at once.
+  player's turn and when it is captured; a deviation on purpose, as the original rewrites it on every `city_recalc`
+  (a window opened or a unit moved included), which would make what a route earns depend on what is looked at. So a
+  partner's change during a turn counts from its next processing; a city not yet processed has it worked out when
+  read.

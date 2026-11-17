@@ -1,6 +1,7 @@
 import { PendingEffectRegistry } from '@civ-clone/core-pending-effect';
 import { TradeRouteRegistry } from '@civ-clone/core-city/TradeRouteRegistry';
 import CapitalLink from '../../lib/capitalLink';
+import Captured from '@civ-clone/core-city/Rules/Captured';
 import Destroyed from '@civ-clone/core-city/Rules/Destroyed';
 import ProcessYield from '@civ-clone/core-city/Rules/ProcessYield';
 import TradeRouteLimit from '@civ-clone/base-city-trade-route/Rules/TradeRouteLimit';
@@ -28,6 +29,7 @@ export declare const getRules: ({
 }: TradeRouteRuleDependencies) => (
   | YieldRule
   | ProcessYield
+  | Captured
   | TradeRouteLimit
   | Destroyed
 )[];
