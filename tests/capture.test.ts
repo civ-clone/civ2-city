@@ -33,6 +33,7 @@ import InciteRevolt from '@civ-clone/base-unit-action-incite-revolt/InciteRevolt
 import LandMassRegistry from '@civ-clone/core-world/LandMassRegistry';
 import Partisan from '@civ-clone/base-unit-partisan/Partisan';
 import Player from '@civ-clone/core-player/Player';
+import Priority from '@civ-clone/core-rule/Priority';
 import PlayerRegistry from '@civ-clone/core-player/PlayerRegistry';
 import PlayerTreasury from '@civ-clone/core-treasury/PlayerTreasury';
 import PlayerTreasuryRegistry from '@civ-clone/core-treasury/PlayerTreasuryRegistry';
@@ -281,6 +282,7 @@ const setUp = async ({
       }
     ).filter((rule) =>
       [
+        'civ2-city:city/captured/power-ranks',
         'civ2-city:city/captured/plunder-share',
         'civ2-city:city/captured/plunder',
         'civ2-city:city/captured/rehome-units',
@@ -311,6 +313,7 @@ const setUp = async ({
     unitRegistry,
     world,
     ruleRegistry,
+    playerRegistry,
     playerTreasuryRegistry,
   };
 };
@@ -399,7 +402,7 @@ describe('city:captured plunder by Barbarians', (): void => {
 });
 
 describe('city:captured order', (): void => {
-  it('takes the share first, then shrinks before the units, then plunders and raises Partisans after every Normal rule', (): void => {
+  it('takes the power ranks first and the share next, then shrinks before the units, then plunders and raises Partisans after every Normal rule', (): void => {
     const ruleRegistry = new RuleRegistry();
 
     ruleRegistry.register(...captured());
@@ -409,7 +412,7 @@ describe('city:captured order', (): void => {
       .filter((rule) => rule instanceof Captured)
       .map((rule) => rule.id().replace('civ2-city:city/captured/', ''));
 
-    expect(ids[0]).equal('plunder-share');
+    expect(ids.slice(0, 2)).eql(['power-ranks', 'plunder-share']);
     expect(ids.indexOf('shrink')).lessThan(ids.indexOf('rehome-units'));
     expect(ids.slice(-3)).eql(['plunder', 'partisans', 'founder']);
   });
@@ -531,6 +534,46 @@ describe('city:captured partisans', (): void => {
     expect(rising[2] === loser).true;
     expect((rising[3] as Unit[]).length).equal(6);
     expect(rising[4] === captor).true;
+  });
+
+  it("counts them by the ranks from before a civil war's split (`_partisans` :5254, turn-start ranks)", async (): Promise<void> => {
+    const count = async (split: boolean): Promise<number> => {
+      const {
+        city,
+        captor,
+        loser,
+        playerRegistry,
+        ruleRegistry,
+        unitRegistry,
+      } = await setUp();
+
+      if (split) {
+        // Stands in for civ2-player's civil war at 900: two new players join ahead of the captor, so the loser and the
+        //  captor would rank 7 and 4 after it, rather than 7 and 6.
+        ruleRegistry.register(
+          new Captured(
+            new Priority(900),
+            new Effect((): void => {
+              playerRegistry.register(
+                new Player(ruleRegistry),
+                new Player(ruleRegistry)
+              );
+              playerRegistry.unregister(captor);
+              playerRegistry.register(captor);
+            })
+          )
+        );
+      }
+
+      city.capture(captor);
+
+      return partisansOf(unitRegistry, loser).length;
+    };
+
+    // Democracy against Monarchy, ranks 7 and 6, size 8 − 1: (4 + 1 + 1) / 2 = 3, doubled; with the ranks after the
+    //  split, 7 and 4, it would be (4 + 3 + 1) / 2 = 4, doubled.
+    expect(await count(false)).equal(6);
+    expect(await count(true)).equal(6);
   });
 
   it('halves them for an incited city, and raises none for a subverted one or a founder retaking it', async (): Promise<void> => {
