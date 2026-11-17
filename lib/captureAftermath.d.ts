@@ -69,6 +69,12 @@ export declare const waitBeforePlunder: (
   pending: Promise<unknown>
 ) => void;
 export declare const partisansPriority = 2600;
+/**
+ * The power ranks the Partisans' count reads are taken before every other rule of a capture, a civil war's included
+ *  (civ2-player's runs at 900): Civ2's are from the start of the turn (`civ_update_power_ranks`, read by `_partisans`
+ *  :5254), before the rebels exist.
+ */
+export declare const powerRanksPriority = 500;
 export declare const founderPriority = 2700;
 /**
  * Plunder, the units the city supported, and Partisans: OpenCiv2 `src/auto/city.cpp` `city_capture_aftermath`

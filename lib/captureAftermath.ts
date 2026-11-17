@@ -178,15 +178,24 @@ export const waitBeforePlunder = (
   ]);
 };
 export const partisansPriority = 2600;
+
+/**
+ * The power ranks the Partisans' count reads are taken before every other rule of a capture, a civil war's included
+ *  (civ2-player's runs at 900): Civ2's are from the start of the turn (`civ_update_power_ranks`, read by `_partisans`
+ *  :5254), before the rebels exist.
+ */
+export const powerRanksPriority = 500;
 export const founderPriority = 2700;
 
 interface Snapshot {
   share: number;
-  ranks: Map<Player, number>;
 }
 
-// The city as it was before any rule of its capture changed it, taken at `High`.
+// The city's plunder share as it was before any of civ2-city's own capture rules changed it, taken at `High`.
 const snapshots = new WeakMap<City, Snapshot>();
+
+// The power ranks before any rule of the capture changed anything, taken at `powerRanksPriority`.
+const rankSnapshots = new WeakMap<City, Map<Player, number>>();
 
 /**
  * Plunder, the units the city supported, and Partisans: OpenCiv2 `src/auto/city.cpp` `city_capture_aftermath`
@@ -255,19 +264,15 @@ export const captureRules = (
       (player === loser ? sizeOf(city) : 0);
 
   return [
-    // `city_treasury_share` is taken first, from the city's size and its owner's gold before anything changes. The
-    //  power ranks are taken here too: Civ2's are from the start of the turn (`civ_update_power_ranks`), which
-    //  nothing keeps, so this is the nearest moment.
+    // The power ranks, first of all: Civ2's are from the start of the turn (`civ_update_power_ranks`), which nothing
+    //  keeps, so this is the nearest moment, before anything of the capture (a civil war, say) changes them.
     new Captured(
-      'civ2-city:city/captured/plunder-share',
-      new High(),
+      'civ2-city:city/captured/power-ranks',
+      new Priority(powerRanksPriority),
       new Effect((city: City, captor: Player, loser: Player): void => {
-        const size = sizeOf(city),
-          gold = goldOf(loser)?.value() ?? 0;
-
-        snapshots.set(city, {
-          share: treasuryShare(size, gold, totalCitySize(loser, city, loser)),
-          ranks: powerRanks(
+        rankSnapshots.set(
+          city,
+          powerRanks(
             playerRegistry
               .entries()
               .filter((player: Player) => !isBarbarian(player))
@@ -279,7 +284,22 @@ export const captureRules = (
                   goldOf(player)?.value() ?? 0
                 ),
               ])
-          ),
+          )
+        );
+      })
+    ),
+
+    // `city_treasury_share` is taken before civ2-city's other rules, from the city's size and its owner's gold (after
+    //  a civil war, which `city_capture_aftermath` decides first, has taken half of it).
+    new Captured(
+      'civ2-city:city/captured/plunder-share',
+      new High(),
+      new Effect((city: City, captor: Player, loser: Player): void => {
+        const size = sizeOf(city),
+          gold = goldOf(loser)?.value() ?? 0;
+
+        snapshots.set(city, {
+          share: treasuryShare(size, gold, totalCitySize(loser, city, loser)),
         });
       })
     ),
@@ -406,9 +426,10 @@ export const captureRules = (
       ),
       new Effect(
         (city: City, captor: Player, loser: Player, cause: unknown): void => {
-          const snapshot = snapshots.get(city);
+          const ranks = rankSnapshots.get(city) ?? new Map<Player, number>();
 
           snapshots.delete(city);
+          rankSnapshots.delete(city);
 
           if (
             city.destroyed() ||
@@ -431,8 +452,7 @@ export const captureRules = (
             return;
           }
 
-          const ranks = snapshot?.ranks ?? new Map<Player, number>(),
-            count = partisanCount({
+          const count = partisanCount({
               size: sizeOf(city),
               loserGovernment,
               captorGovernment: governmentOf(captor, playerGovernmentRegistry),

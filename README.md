@@ -108,7 +108,8 @@ effective @COSMIC values; the tables by government are civ2-government's, and th
   turn, as a unit moving onto or off the route is. Land masses are the world's as built: Civ2 recounts them when
   terrain changes. On a hexagonal grid there's no logical square axis, so the distance is the rounded straight line and
   no road links.
-- **Capture:** no civil war. Power ranks are taken as the capture starts, not at the start of the turn, and reputation and vendettas
+- **Capture:** the civil war is civ2-player's. Power ranks are taken as the capture starts (`powerRanksPriority`, before the
+  civil war), not at the start of the turn, and reputation and vendettas
   aren't modelled, so Partisans are never veterans unless a ruleset passes `reputation`/`vendetta`. Not yet: a
   person's captured city starting in disorder under a Republic or Democracy, the captor's new build (Settlers for a
   computer player, the best defender when the item can't be built), the size-1 city a computer player may keep whole,
