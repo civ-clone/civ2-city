@@ -250,6 +250,8 @@ const linkOf = (
 ) =>
   ({
     connection: () => link,
+    routeLink: () => link,
+    key: () => 'turn',
     has: (city: City, Improvement: Function) =>
       (improvements.get(city) ?? []).includes(Improvement),
     landMass: (tile: object) => landMasses.get(tile) ?? null,

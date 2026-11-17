@@ -2,10 +2,8 @@ import {
   TradeRouteRegistry,
   instance as tradeRouteRegistryInstance,
 } from '@civ-clone/core-city/TradeRouteRegistry';
-import {
-  baseTrade,
-  computingBaseTrade,
-} from '@civ-clone/base-city-trade-route/lib/baseTrade';
+import BaseTrades from '../../lib/baseTrades';
+import { computingBaseTrade } from '@civ-clone/base-city-trade-route/lib/baseTrade';
 import { routeIncome, tradeRoutesPerCity } from '../../lib/tradeRoutes';
 import Airport from '@civ-clone/base-city-improvement-airport/Airport';
 import CapitalLink from '../../lib/capitalLink';
@@ -23,8 +21,13 @@ import { removeTradeRoutes } from '@civ-clone/base-city-trade-route/lib/removeTr
 import { tradeRouteYields } from '@civ-clone/base-city-trade-route/lib/tradeRouteYields';
 
 export interface TradeRouteRuleDependencies {
-  /** The capital link to share with the corruption rules, whose rules keep it up to date. */
-  capitalLink?: CapitalLink;
+  /**
+   * The capital link shared with the corruption rules (`Rules/City/corruption`), whose rules keep it up to date: one
+   *  that no such rule invalidates would keep a turn's links all turn, whatever is built.
+   */
+  capitalLink: CapitalLink;
+  /** The cities' kept base trade (`lib/baseTrades`); one is made on `capitalLink` otherwise. */
+  baseTrades?: BaseTrades;
   tradeRouteRegistry?: TradeRouteRegistry;
 }
 
@@ -34,19 +37,17 @@ export interface TradeRouteRuleDependencies {
  *  gone. A captured city keeps its routes (`city_delete` alone clears them, `city.cpp:1335-1342`).
  */
 export const getRules = ({
-  capitalLink = new CapitalLink(),
+  capitalLink,
+  baseTrades = new BaseTrades(capitalLink),
   tradeRouteRegistry = tradeRouteRegistryInstance,
-}: TradeRouteRuleDependencies = {}): (
-  | YieldRule
-  | TradeRouteLimit
-  | Destroyed
-)[] => [
+}: TradeRouteRuleDependencies): (YieldRule | TradeRouteLimit | Destroyed)[] => [
   // `city_calc_trade_happiness` (`city.cpp:3667-3690`): each route adds trade worked out from both cities' trade after
   //  corruption without their routes (`base_trade`), after the worked squares (`Priority(0)`) and before corruption
-  //  (`High`), which the original works out again on the total. The original reads the `base_trade` each city kept at
-  //  its last recalculation; here both are worked out now. Each yield's provider is the partner's id, which is how the
-  //  renderer finds a route's trade. Left out while a `baseTrade` is being worked out, so cities routed to each other
-  //  don't recurse.
+  //  (`High`), which the original works out again on the total. This city's is worked out now (and kept); a partner's
+  //  is the one it kept at its last recalculation (`lib/baseTrades`), as the original reads it. The link is worked out
+  //  once a turn and again when the map changes (`CapitalLink#routeLink`). Each yield's provider is the partner's id,
+  //  which is how the renderer finds a route's trade. Left out while a `baseTrade` is being worked out, so cities routed
+  //  to each other don't recurse.
   new YieldRule(
     'civ2-city:city/yield/trade-routes',
     new Priority(500),
@@ -55,7 +56,7 @@ export const getRules = ({
       (city: City): boolean => tradeRouteRegistry.getByCity(city).length > 0
     ),
     new Effect((city: City, yields: Yield[]): Yield[] => {
-      const base = baseTrade(city, Trade),
+      const base = baseTrades.fresh(city),
         player = city.player();
 
       return tradeRouteYields(
@@ -65,8 +66,8 @@ export const getRules = ({
         (partner: City): number =>
           routeIncome({
             base,
-            partnerBase: baseTrade(partner, Trade),
-            link: capitalLink.connection(player, city.tile(), partner.tile()),
+            partnerBase: baseTrades.of(partner),
+            link: capitalLink.routeLink(player, city.tile(), partner.tile()),
             airports:
               capitalLink.has(city, Airport) &&
               capitalLink.has(partner, Airport),

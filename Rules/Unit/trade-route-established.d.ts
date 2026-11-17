@@ -10,9 +10,15 @@ import CapitalLink from '../../lib/capitalLink';
 import City from '@civ-clone/core-city/City';
 import TradeRouteEstablished from '@civ-clone/base-unit-action-establish-trade-route/Rules/TradeRouteEstablished';
 import Unit from '@civ-clone/core-unit/Unit';
+import BaseTrades from '../../lib/baseTrades';
 export interface TradeRouteEstablishedDependencies {
-  /** The capital link to share with the corruption rules, whose rules keep it up to date. */
-  capitalLink?: CapitalLink;
+  /**
+   * The capital link shared with the corruption rules (`Rules/City/corruption`), whose rules keep it up to date: one
+   *  that no such rule invalidates would keep a turn's links all turn, whatever is built.
+   */
+  capitalLink: CapitalLink;
+  /** The cities' kept base trade (`lib/baseTrades`), shared with the route income rule; one is made otherwise. */
+  baseTrades?: BaseTrades;
   cityRegistry?: CityRegistry;
   engine?: Engine;
   interactionRegistry?: InteractionRegistry;
@@ -49,6 +55,7 @@ export declare const tradeRouteGoods: (unit: Unit) => string;
  */
 export declare const getRules: ({
   capitalLink,
+  baseTrades,
   cityRegistry,
   engine,
   interactionRegistry,
@@ -59,5 +66,5 @@ export declare const getRules: ({
   tradeRouteRegistry,
   turn,
   demanded,
-}?: TradeRouteEstablishedDependencies) => TradeRouteEstablished[];
+}: TradeRouteEstablishedDependencies) => TradeRouteEstablished[];
 export default getRules;

@@ -79,7 +79,8 @@ effective @COSMIC values; the tables by government are civ2-government's, and th
   - **Income** each turn per route: (both cities' trade after corruption, without routes, + 4) >> 3, plus link ×
     value / 2 (the road link from `CapitalLink.connection`, at least 1 with Airports in both, +1 for this city's
     Superhighways), halved for an own partner; before corruption, which is worked out on the total. Each route's
-    `Trade` is tagged with the partner's id.
+    `Trade` is tagged with the partner's id. This city's base trade is worked out each time; a partner's is the one
+    kept at its own last recalculation, forgotten each turn and whenever the capital link's `key()` changes.
   - **Delivery** (base-unit-action-establish-trade-route's `TradeRouteEstablished`): the bonus of
     `unit_caravan_trade_revenue` in gold and as much in research, 10 warmer attitudes both ways (civ2-diplomacy), and
     a route each way. A unit with no home runs from its player's nearest city (`tradeRouteHome`). Emits
@@ -126,4 +127,8 @@ effective @COSMIC values; the tables by government are civ2-government's, and th
   so the demand bonus is never paid, and a city keeps one route per partner each way (the original keeps a second one
   carrying other goods). No food caravans. Base trade is worked out when asked rather than kept from the last
   recalculation. A homeless unit's nearest city is by the world's distance, and a unit whose player has no city earns
-  nothing (the original falls back on city 0); a route never joins a city to itself.
+  nothing (the original falls back on city 0); a route never joins a city to itself. The −10 attitude both ways is
+  only for players who have met (the original adjusts it regardless); entering the city makes contact first. A
+  partner's base trade is the one it kept at its last recalculation in the turn (`lib/baseTrades`), and a route's link
+  is worked out once a turn and when the map changes (`CapitalLink#routeLink`), so a unit moving onto the road counts
+  from the next turn.

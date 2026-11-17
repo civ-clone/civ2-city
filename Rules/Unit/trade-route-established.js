@@ -25,10 +25,9 @@ const Navigation_1 = require("@civ-clone/base-science-advance-navigation/Navigat
 const Railroad_1 = require("@civ-clone/base-science-advance-railroad/Railroad");
 const Research_1 = require("@civ-clone/core-science/Yields/Research");
 const Superhighways_1 = require("@civ-clone/base-city-improvement-superhighways/Superhighways");
-const Yields_1 = require("../../Yields");
 const TradeRouteEstablished_1 = require("@civ-clone/base-unit-action-establish-trade-route/Rules/TradeRouteEstablished");
 const relations_1 = require("@civ-clone/civ2-diplomacy/lib/relations");
-const baseTrade_1 = require("@civ-clone/base-city-trade-route/lib/baseTrade");
+const baseTrades_1 = require("../../lib/baseTrades");
 const goods_1 = require("@civ-clone/base-city-trade-route/lib/goods");
 const core_random_1 = require("@civ-clone/core-random");
 const escape_1 = require("@civ-clone/base-unit-agent/lib/escape");
@@ -51,7 +50,7 @@ exports.tradeRouteGoods = tradeRouteGoods;
  *
  * Emits `unit:trade-route-established` with the player, the home city, the city, the goods and the bonus.
  */
-const getRules = ({ capitalLink = new capitalLink_1.default(), cityRegistry = CityRegistry_1.instance, engine = Engine_1.instance, interactionRegistry = InteractionRegistry_1.instance, playerResearchRegistry = PlayerResearchRegistry_1.instance, playerTreasuryRegistry = PlayerTreasuryRegistry_1.instance, randomNumberGenerator = core_random_1.instance, ruleRegistry = RuleRegistry_1.instance, tradeRouteRegistry = TradeRouteRegistry_1.instance, turn = Turn_1.instance, demanded = () => 0, } = {}) => {
+const getRules = ({ capitalLink, baseTrades = new baseTrades_1.default(capitalLink), cityRegistry = CityRegistry_1.instance, engine = Engine_1.instance, interactionRegistry = InteractionRegistry_1.instance, playerResearchRegistry = PlayerResearchRegistry_1.instance, playerTreasuryRegistry = PlayerTreasuryRegistry_1.instance, randomNumberGenerator = core_random_1.instance, ruleRegistry = RuleRegistry_1.instance, tradeRouteRegistry = TradeRouteRegistry_1.instance, turn = Turn_1.instance, demanded = () => 0, }) => {
     const knows = (player, AdvanceType) => {
         try {
             return playerResearchRegistry
@@ -70,9 +69,8 @@ const getRules = ({ capitalLink = new capitalLink_1.default(), cityRegistry = Ci
             const playerResearch = playerResearchRegistry.getByPlayer(player), costs = ruleRegistry
                 .process(Cost_1.default, (_a = playerResearch.researching()) !== null && _a !== void 0 ? _a : Advance_1.default, playerResearch)
                 .filter((cost) => Number.isFinite(cost));
-            return costs.length > 0
-                ? Math.max(...costs)
-                : playerResearch.cost().value();
+            // The first finite answer, as `PlayerResearch#research` takes the first.
+            return costs.length > 0 ? costs[0] : playerResearch.cost().value();
         }
         catch (e) {
             return Infinity;
@@ -85,10 +83,10 @@ const getRules = ({ capitalLink = new capitalLink_1.default(), cityRegistry = Ci
         (0, addTradeRoute_1.addTradeRoute)(holder, partner, {
             limit: (city) => (0, tradeRouteLimit_1.tradeRouteLimit)(city, ruleRegistry, tradeRoutes_1.tradeRoutesPerCity),
             replace: (city, routes, newPartner) => (0, addTradeRoute_1.replaceWeakest)((from, to) => to === newPartner
-                ? (0, baseTrade_1.baseTrade)(to, Yields_1.Trade)
+                ? baseTrades.of(to)
                 : (0, tradeRoutes_1.routeWorth)({
-                    partnerBase: (0, baseTrade_1.baseTrade)(to, Yields_1.Trade),
-                    link: capitalLink.connection(from.player(), from.tile(), to.tile()),
+                    partnerBase: baseTrades.of(to),
+                    link: capitalLink.routeLink(from.player(), from.tile(), to.tile()),
                     airports: airports(from, to),
                     domestic: from.player() === to.player(),
                 }), true)(city, routes, newPartner),
@@ -118,13 +116,13 @@ const getRules = ({ capitalLink = new capitalLink_1.default(), cityRegistry = Ci
             roll = Math.floor(randomNumberGenerator() * 10), bonus = (0, tradeRoutes_1.deliveryBonus)({
                 distance: (0, capitalLink_1.diagonalDistance)(home.tile(), city.tile()),
                 mapSize: (0, mapSize_1.default)(city.tile().map().width() * city.tile().map().height()),
-                destinationBase: (0, baseTrade_1.baseTrade)(city, Yields_1.Trade),
-                homeBase: (0, baseTrade_1.baseTrade)(home, Yields_1.Trade),
+                destinationBase: baseTrades.fresh(city),
+                homeBase: baseTrades.fresh(home),
                 otherLandMass: capitalLink.landMass(home.tile()) !==
                     capitalLink.landMass(city.tile()),
                 domestic: owner === player,
                 freight: unit instanceof Freight_1.default,
-                link: capitalLink.connection(player, city.tile(), home.tile()),
+                link: capitalLink.routeLink(player, city.tile(), home.tile()),
                 airports: airports(city, home),
                 destinationSuperhighways: capitalLink.has(city, Superhighways_1.default),
                 homeSuperhighways: capitalLink.has(home, Superhighways_1.default),

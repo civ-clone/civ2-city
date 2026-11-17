@@ -56,19 +56,23 @@ import Player from '@civ-clone/core-player/Player';
 import Railroad from '@civ-clone/base-science-advance-railroad/Railroad';
 import Research from '@civ-clone/core-science/Yields/Research';
 import Superhighways from '@civ-clone/base-city-improvement-superhighways/Superhighways';
-import { Trade } from '../../Yields';
 import TradeRouteEstablished from '@civ-clone/base-unit-action-establish-trade-route/Rules/TradeRouteEstablished';
 import Unit from '@civ-clone/core-unit/Unit';
 import { attitude } from '@civ-clone/civ2-diplomacy/lib/relations';
-import { baseTrade } from '@civ-clone/base-city-trade-route/lib/baseTrade';
+import BaseTrades from '../../lib/baseTrades';
 import { goodsFor } from '@civ-clone/base-city-trade-route/lib/goods';
 import { instance as rngInstance } from '@civ-clone/core-random';
 import { nearestCity } from '@civ-clone/base-unit-agent/lib/escape';
 import { tradeRouteLimit } from '@civ-clone/base-city-trade-route/lib/tradeRouteLimit';
 
 export interface TradeRouteEstablishedDependencies {
-  /** The capital link to share with the corruption rules, whose rules keep it up to date. */
-  capitalLink?: CapitalLink;
+  /**
+   * The capital link shared with the corruption rules (`Rules/City/corruption`), whose rules keep it up to date: one
+   *  that no such rule invalidates would keep a turn's links all turn, whatever is built.
+   */
+  capitalLink: CapitalLink;
+  /** The cities' kept base trade (`lib/baseTrades`), shared with the route income rule; one is made otherwise. */
+  baseTrades?: BaseTrades;
   cityRegistry?: CityRegistry;
   engine?: Engine;
   interactionRegistry?: InteractionRegistry;
@@ -107,7 +111,8 @@ export const tradeRouteGoods = (unit: Unit): string => goodsFor(unit, goods);
  * Emits `unit:trade-route-established` with the player, the home city, the city, the goods and the bonus.
  */
 export const getRules = ({
-  capitalLink = new CapitalLink(),
+  capitalLink,
+  baseTrades = new BaseTrades(capitalLink),
   cityRegistry = cityRegistryInstance,
   engine = engineInstance,
   interactionRegistry = interactionRegistryInstance,
@@ -118,7 +123,7 @@ export const getRules = ({
   tradeRouteRegistry = tradeRouteRegistryInstance,
   turn = turnInstance,
   demanded = (): number => 0,
-}: TradeRouteEstablishedDependencies = {}): TradeRouteEstablished[] => {
+}: TradeRouteEstablishedDependencies): TradeRouteEstablished[] => {
   const knows = (player: Player, AdvanceType: typeof Advance): boolean => {
       try {
         return playerResearchRegistry
@@ -141,9 +146,8 @@ export const getRules = ({
             )
             .filter((cost: number): boolean => Number.isFinite(cost));
 
-        return costs.length > 0
-          ? Math.max(...costs)
-          : playerResearch.cost().value();
+        // The first finite answer, as `PlayerResearch#research` takes the first.
+        return costs.length > 0 ? costs[0] : playerResearch.cost().value();
       } catch (e) {
         return Infinity;
       }
@@ -161,10 +165,10 @@ export const getRules = ({
           replaceWeakest(
             (from: City, to: City): number =>
               to === newPartner
-                ? baseTrade(to, Trade)
+                ? baseTrades.of(to)
                 : routeWorth({
-                    partnerBase: baseTrade(to, Trade),
-                    link: capitalLink.connection(
+                    partnerBase: baseTrades.of(to),
+                    link: capitalLink.routeLink(
                       from.player(),
                       from.tile(),
                       to.tile()
@@ -213,14 +217,14 @@ export const getRules = ({
             mapSize: mapSize(
               city.tile().map().width() * city.tile().map().height()
             ),
-            destinationBase: baseTrade(city, Trade),
-            homeBase: baseTrade(home, Trade),
+            destinationBase: baseTrades.fresh(city),
+            homeBase: baseTrades.fresh(home),
             otherLandMass:
               capitalLink.landMass(home.tile()) !==
               capitalLink.landMass(city.tile()),
             domestic: owner === player,
             freight: unit instanceof Freight,
-            link: capitalLink.connection(player, city.tile(), home.tile()),
+            link: capitalLink.routeLink(player, city.tile(), home.tile()),
             airports: airports(city, home),
             destinationSuperhighways: capitalLink.has(city, Superhighways),
             homeSuperhighways: capitalLink.has(home, Superhighways),

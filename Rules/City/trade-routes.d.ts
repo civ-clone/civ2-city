@@ -1,11 +1,17 @@
 import { TradeRouteRegistry } from '@civ-clone/core-city/TradeRouteRegistry';
+import BaseTrades from '../../lib/baseTrades';
 import CapitalLink from '../../lib/capitalLink';
 import Destroyed from '@civ-clone/core-city/Rules/Destroyed';
 import TradeRouteLimit from '@civ-clone/base-city-trade-route/Rules/TradeRouteLimit';
 import YieldRule from '@civ-clone/core-city/Rules/Yield';
 export interface TradeRouteRuleDependencies {
-  /** The capital link to share with the corruption rules, whose rules keep it up to date. */
-  capitalLink?: CapitalLink;
+  /**
+   * The capital link shared with the corruption rules (`Rules/City/corruption`), whose rules keep it up to date: one
+   *  that no such rule invalidates would keep a turn's links all turn, whatever is built.
+   */
+  capitalLink: CapitalLink;
+  /** The cities' kept base trade (`lib/baseTrades`); one is made on `capitalLink` otherwise. */
+  baseTrades?: BaseTrades;
   tradeRouteRegistry?: TradeRouteRegistry;
 }
 /**
@@ -15,6 +21,7 @@ export interface TradeRouteRuleDependencies {
  */
 export declare const getRules: ({
   capitalLink,
+  baseTrades,
   tradeRouteRegistry,
-}?: TradeRouteRuleDependencies) => (YieldRule | TradeRouteLimit | Destroyed)[];
+}: TradeRouteRuleDependencies) => (YieldRule | TradeRouteLimit | Destroyed)[];
 export default getRules;
