@@ -121,15 +121,6 @@ export const continuedBaseTrade = (
   return Math.max(reduceYield(continued, Trade), 0);
 };
 
-// The base trade worked out inside a city's yield pipeline, by the array `City#yields` returns, so the city's
-//  processing, which is handed that array, keeps it without working it out again.
-const pipelineBase = new WeakMap<Yield[], number>();
-
-/** Notes `value` as the base trade of the pipeline whose yields are `yields`. */
-export const notePipelineBaseTrade = (yields: Yield[], value: number): void => {
-  pipelineBase.set(yields, value);
-};
-
 /** The base trade kept for `city`, or `null` if none has been (or what was kept isn't a finite number). */
 export const storedBaseTrade = (
   city: City,
@@ -155,25 +146,18 @@ export const baseTradeOf = (
 ): number => storedBaseTrade(city, dependencies) ?? liveBaseTrade(city);
 
 /**
- * Keeps `city`'s base trade: at the city's processing and its capture only. Given the yields its processing was handed
- *  (`cityYields`), the value is the one its route income rule worked out in that pipeline, or, if that rule didn't run
- *  (no routes), the pipeline's own trade, which is then the same; otherwise it is worked out now.
+ * Works `city`'s base trade out now and keeps it: at the city's processing and its capture only. At the processing it
+ *  is worked out as the city's trade is processed, after its food and shields have been (a city that grew or finished
+ *  a building has changed since its yields were asked for), as the original's second `city_recalc` (`city.cpp:4491`)
+ *  leaves it.
  */
 export const storeBaseTrade = (
   city: City,
   {
     pendingEffectRegistry = pendingEffectRegistryInstance,
-  }: BaseTradeDependencies = {},
-  cityYields: Yield[] | null = null,
-  hasRoutes: boolean = true
+  }: BaseTradeDependencies = {}
 ): number => {
-  const value =
-      cityYields === null
-        ? liveBaseTrade(city)
-        : pipelineBase.get(cityYields) ??
-          (hasRoutes
-            ? liveBaseTrade(city)
-            : Math.max(reduceYield(cityYields, Trade), 0)),
+  const value = liveBaseTrade(city),
     record = recordOf(city, pendingEffectRegistry);
 
   if (record === null) {

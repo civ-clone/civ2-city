@@ -37,7 +37,6 @@ const getRules = ({ capitalLink, pendingEffectRegistry = core_pending_effect_1.i
     //  `baseTrade` is being worked out, so cities routed to each other don't recurse.
     new Yield_1.default('civ2-city:city/yield/trade-routes', new Priority_1.default(500), new Criterion_1.default(() => !(0, baseTrade_2.computingBaseTrade)()), new Criterion_1.default((city) => tradeRouteRegistry.getByCity(city).length > 0), new Effect_1.default((city, yields) => {
         const base = (0, baseTrade_1.continuedBaseTrade)(city, yields, income, ruleRegistry), player = city.player();
-        (0, baseTrade_1.notePipelineBaseTrade)(yields, base);
         return (0, tradeRouteYields_1.tradeRouteYields)(city, yields, Yields_1.Trade, (partner) => (0, tradeRoutes_1.routeIncome)({
             base,
             partnerBase: (0, baseTrade_1.baseTradeOf)(partner, { pendingEffectRegistry }),
@@ -52,8 +51,8 @@ const getRules = ({ capitalLink, pendingEffectRegistry = core_pending_effect_1.i
         income,
         // `city_process_turn`'s `city_recalc` (`city.cpp:4470`) keeps the city's `base_trade`: here, as its trade is
         //  processed at the start of its player's turn, and nowhere else.
-        new ProcessYield_1.default('civ2-city:city/process-yield/base-trade', new Criterion_1.default((cityYield) => cityYield instanceof Yields_1.Trade), new Effect_1.default((cityYield, city, cityYields) => {
-            (0, baseTrade_1.storeBaseTrade)(city, { pendingEffectRegistry }, cityYields, tradeRouteRegistry.getByCity(city).length > 0);
+        new ProcessYield_1.default('civ2-city:city/process-yield/base-trade', new Criterion_1.default((cityYield) => cityYield instanceof Yields_1.Trade), new Effect_1.default((cityYield, city) => {
+            (0, baseTrade_1.storeBaseTrade)(city, { pendingEffectRegistry });
         })),
         // A captured city's base trade is kept again at once, under its new owner's corruption (`city_capture_aftermath`
         //  recalculates the city), after every other rule of the capture; one the capture destroyed has none.

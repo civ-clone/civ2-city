@@ -1,6 +1,7 @@
 import {
   BASE_TRADE,
   baseTradeOf,
+  continuedBaseTrade,
   liveBaseTrade,
   storedBaseTrade,
 } from '../lib/baseTrade';
@@ -325,8 +326,8 @@ describe('trade routes with corruption', (): void => {
   });
 
   // The route income rule works the city's own base trade out by continuing its own pipeline from where the rule
-  //  stands; processing keeps that value. It must be what a whole pipeline of its own gives (`liveBaseTrade`), whatever
-  //  the government, distance, celebration, Courthouse or later rule.
+  //  stands. It must be what a whole pipeline of its own gives (`liveBaseTrade`), whatever the government, distance,
+  //  celebration, Courthouse or later rule.
   describe("the city's own base trade, worked out inside its pipeline", (): void => {
     // A Courthouse's halving as civ2-city-improvement registers it (`Priority(1500)`), after corruption.
     const courthouse = (cityImprovementRegistry: CityImprovementRegistry) =>
@@ -368,18 +369,29 @@ describe('trade routes with corruption', (): void => {
 
         prepare(set);
 
-        const { near, far, processTrade } = set,
+        const { near, far, ruleRegistry } = set,
           before = near.yields().map((cityYield) => cityYield.value());
 
         [near, far].forEach((city) => {
-          const live = liveBaseTrade(city);
+          // The pipeline up to the route income rule, as `City#yields` runs it.
+          const rules = ruleRegistry.get(YieldRule),
+            index = rules.findIndex(
+              (rule) => rule.id() === 'civ2-city:city/yield/trade-routes'
+            ),
+            yields: Yield[] = [];
 
-          processTrade(city);
+          rules.slice(0, index).forEach((rule) => {
+            if (rule.validate(city, yields)) {
+              ([] as (Yield | void)[])
+                .concat(rule.process(city, yields))
+                .forEach((cityYield) => cityYield && yields.push(cityYield));
+            }
+          });
 
           expect(
-            storedBaseTrade(city, { pendingEffectRegistry }),
+            continuedBaseTrade(city, yields, rules[index], ruleRegistry),
             `${description}: ${city.name()}`
-          ).equal(live);
+          ).equal(liveBaseTrade(city));
         });
 
         // Asking again gives the same: the continuation changed nothing of the city's own yields.

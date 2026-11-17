@@ -38,11 +38,6 @@ export declare const continuedBaseTrade: (
   rule: YieldRule,
   ruleRegistry: RuleRegistry
 ) => number;
-/** Notes `value` as the base trade of the pipeline whose yields are `yields`. */
-export declare const notePipelineBaseTrade: (
-  yields: Yield[],
-  value: number
-) => void;
 /** The base trade kept for `city`, or `null` if none has been (or what was kept isn't a finite number). */
 export declare const storedBaseTrade: (
   city: City,
@@ -54,15 +49,14 @@ export declare const baseTradeOf: (
   dependencies?: BaseTradeDependencies
 ) => number;
 /**
- * Keeps `city`'s base trade: at the city's processing and its capture only. Given the yields its processing was handed
- *  (`cityYields`), the value is the one its route income rule worked out in that pipeline, or, if that rule didn't run
- *  (no routes), the pipeline's own trade, which is then the same; otherwise it is worked out now.
+ * Works `city`'s base trade out now and keeps it: at the city's processing and its capture only. At the processing it
+ *  is worked out as the city's trade is processed, after its food and shields have been (a city that grew or finished
+ *  a building has changed since its yields were asked for), as the original's second `city_recalc` (`city.cpp:4491`)
+ *  leaves it.
  */
 export declare const storeBaseTrade: (
   city: City,
-  { pendingEffectRegistry }?: BaseTradeDependencies,
-  cityYields?: Yield[] | null,
-  hasRoutes?: boolean
+  { pendingEffectRegistry }?: BaseTradeDependencies
 ) => number;
 /** Forgets `city`'s base trade, when the city is gone. */
 export declare const forgetBaseTrade: (

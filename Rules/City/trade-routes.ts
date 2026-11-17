@@ -14,7 +14,6 @@ import {
   baseTradeOf,
   continuedBaseTrade,
   forgetBaseTrade,
-  notePipelineBaseTrade,
   storeBaseTrade,
 } from '../../lib/baseTrade';
 import { routeIncome, tradeRoutesPerCity } from '../../lib/tradeRoutes';
@@ -86,8 +85,6 @@ export const getRules = ({
         const base = continuedBaseTrade(city, yields, income, ruleRegistry),
           player = city.player();
 
-        notePipelineBaseTrade(yields, base);
-
         return tradeRouteYields(
           city,
           yields,
@@ -116,13 +113,8 @@ export const getRules = ({
     new ProcessYield(
       'civ2-city:city/process-yield/base-trade',
       new Criterion((cityYield: Yield): boolean => cityYield instanceof Trade),
-      new Effect((cityYield: Yield, city: City, cityYields: Yield[]): void => {
-        storeBaseTrade(
-          city,
-          { pendingEffectRegistry },
-          cityYields,
-          tradeRouteRegistry.getByCity(city).length > 0
-        );
+      new Effect((cityYield: Yield, city: City): void => {
+        storeBaseTrade(city, { pendingEffectRegistry });
       })
     ),
 
