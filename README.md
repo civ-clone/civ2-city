@@ -80,7 +80,7 @@ effective @COSMIC values; the tables by government are civ2-government's, and th
     value / 2 (the road link from `CapitalLink.connection`, at least 1 with Airports in both, +1 for this city's
     Superhighways), halved for an own partner; before corruption, which is worked out on the total. Each route's
     `Trade` is tagged with the partner's id. This city's base trade is worked out each time; a partner's is the one
-    kept at its own last recalculation, forgotten each turn and whenever the capital link's `key()` changes.
+    it kept at its last processing (`lib/baseTrade`).
   - **Delivery** (base-unit-action-establish-trade-route's `TradeRouteEstablished`): the bonus of
     `unit_caravan_trade_revenue` in gold and as much in research, 10 warmer attitudes both ways (civ2-diplomacy), and
     a route each way. A unit with no home runs from its player's nearest city (`tradeRouteHome`). Emits
@@ -125,10 +125,10 @@ effective @COSMIC values; the tables by government are civ2-government's, and th
   aren't kept, so their terms are left out; "next to the ocean" is any ocean, not ocean body 1.
 - **Trade routes:** goods are names only (`lib/tradeRoutes`'s 16 keys, picked by the unit's id): no supply or demand,
   so the demand bonus is never paid, and a city keeps one route per partner each way (the original keeps a second one
-  carrying other goods). No food caravans. Base trade is worked out when asked rather than kept from the last
-  recalculation. A homeless unit's nearest city is by the world's distance, and a unit whose player has no city earns
+  carrying other goods). No food caravans. A homeless unit's nearest city is by the world's distance, and a unit whose player has no city earns
   nothing (the original falls back on city 0); a route never joins a city to itself. The −10 attitude both ways is
-  only for players who have met (the original adjusts it regardless); entering the city makes contact first. A
-  partner's base trade is the one it kept at its last recalculation in the turn (`lib/baseTrades`), and a route's link
-  is worked out once a turn and when the map changes (`CapitalLink#routeLink`), so a unit moving onto the road counts
-  from the next turn.
+  only for players who have met (the original adjusts it regardless); entering the city makes contact first. Each
+  city's base trade (`base_trade`) is kept, and saved, only when its yields are processed at the start of its
+  player's turn (the original also keeps it at every other `city_recalc`, a window opened included); a city not yet
+  processed has it worked out when read. So a partner's change during a turn counts from its next processing, as in
+  the original; a just-founded city's counts at once.

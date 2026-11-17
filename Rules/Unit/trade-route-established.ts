@@ -59,7 +59,11 @@ import Superhighways from '@civ-clone/base-city-improvement-superhighways/Superh
 import TradeRouteEstablished from '@civ-clone/base-unit-action-establish-trade-route/Rules/TradeRouteEstablished';
 import Unit from '@civ-clone/core-unit/Unit';
 import { attitude } from '@civ-clone/civ2-diplomacy/lib/relations';
-import BaseTrades from '../../lib/baseTrades';
+import {
+  PendingEffectRegistry,
+  instance as pendingEffectRegistryInstance,
+} from '@civ-clone/core-pending-effect';
+import { baseTradeOf } from '../../lib/baseTrade';
 import { goodsFor } from '@civ-clone/base-city-trade-route/lib/goods';
 import { instance as rngInstance } from '@civ-clone/core-random';
 import { nearestCity } from '@civ-clone/base-unit-agent/lib/escape';
@@ -71,8 +75,8 @@ export interface TradeRouteEstablishedDependencies {
    *  that no such rule invalidates would keep a turn's links all turn, whatever is built.
    */
   capitalLink: CapitalLink;
-  /** The cities' kept base trade (`lib/baseTrades`), shared with the route income rule; one is made otherwise. */
-  baseTrades?: BaseTrades;
+  /** Where each city's base trade is kept (`lib/baseTrade`), which the delivery only reads. */
+  pendingEffectRegistry?: PendingEffectRegistry;
   cityRegistry?: CityRegistry;
   engine?: Engine;
   interactionRegistry?: InteractionRegistry;
@@ -112,7 +116,7 @@ export const tradeRouteGoods = (unit: Unit): string => goodsFor(unit, goods);
  */
 export const getRules = ({
   capitalLink,
-  baseTrades = new BaseTrades(capitalLink),
+  pendingEffectRegistry = pendingEffectRegistryInstance,
   cityRegistry = cityRegistryInstance,
   engine = engineInstance,
   interactionRegistry = interactionRegistryInstance,
@@ -165,10 +169,10 @@ export const getRules = ({
           replaceWeakest(
             (from: City, to: City): number =>
               to === newPartner
-                ? baseTrades.of(to)
+                ? baseTradeOf(to, { pendingEffectRegistry })
                 : routeWorth({
-                    partnerBase: baseTrades.of(to),
-                    link: capitalLink.routeLink(
+                    partnerBase: baseTradeOf(to, { pendingEffectRegistry }),
+                    link: capitalLink.connection(
                       from.player(),
                       from.tile(),
                       to.tile()
@@ -217,14 +221,14 @@ export const getRules = ({
             mapSize: mapSize(
               city.tile().map().width() * city.tile().map().height()
             ),
-            destinationBase: baseTrades.fresh(city),
-            homeBase: baseTrades.fresh(home),
+            destinationBase: baseTradeOf(city, { pendingEffectRegistry }),
+            homeBase: baseTradeOf(home, { pendingEffectRegistry }),
             otherLandMass:
               capitalLink.landMass(home.tile()) !==
               capitalLink.landMass(city.tile()),
             domestic: owner === player,
             freight: unit instanceof Freight,
-            link: capitalLink.routeLink(player, city.tile(), home.tile()),
+            link: capitalLink.connection(player, city.tile(), home.tile()),
             airports: airports(city, home),
             destinationSuperhighways: capitalLink.has(city, Superhighways),
             homeSuperhighways: capitalLink.has(home, Superhighways),

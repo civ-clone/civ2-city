@@ -24,7 +24,6 @@ import citySpecialistAvailable from './Rules/City/specialist-available';
 import cityTileYield from './Rules/City/tile-yield';
 import cityTiles from './Rules/City/tiles';
 import cityTradeRoutes from './Rules/City/trade-routes';
-import BaseTrades from './lib/baseTrades';
 import CapitalLink from './lib/capitalLink';
 import alliedBy from './lib/allied';
 import cityIncited from './Rules/City/incited';
@@ -52,7 +51,6 @@ export const register = (game: Game): void => {
     unitRegistry: game.units,
     allied: alliedBy(game.interactions),
   });
-  const baseTrades = new BaseTrades(capitalLink);
 
   game.rules.register(
     ...cityBuildingComplete(game.engine),
@@ -195,8 +193,8 @@ export const register = (game: Game): void => {
     ),
     ...cityTiles(),
     ...cityTradeRoutes({
-      baseTrades,
       capitalLink,
+      pendingEffectRegistry: game.pendingEffects,
       tradeRouteRegistry: game.tradeRoutes,
     }),
     ...cityTileReassigned(
@@ -219,11 +217,11 @@ export const register = (game: Game): void => {
     ...playerTurnStart(game.cities, game.units, game.workedTiles, game.rules),
     ...unitDefeated(game.engine),
     ...unitTradeRouteEstablished({
-      baseTrades,
       capitalLink,
       cityRegistry: game.cities,
       engine: game.engine,
       interactionRegistry: game.interactions,
+      pendingEffectRegistry: game.pendingEffects,
       playerResearchRegistry: game.playerResearch,
       playerTreasuryRegistry: game.playerTreasuries,
       randomNumberGenerator: game.rng,

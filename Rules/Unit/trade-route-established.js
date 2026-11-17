@@ -27,7 +27,8 @@ const Research_1 = require("@civ-clone/core-science/Yields/Research");
 const Superhighways_1 = require("@civ-clone/base-city-improvement-superhighways/Superhighways");
 const TradeRouteEstablished_1 = require("@civ-clone/base-unit-action-establish-trade-route/Rules/TradeRouteEstablished");
 const relations_1 = require("@civ-clone/civ2-diplomacy/lib/relations");
-const baseTrades_1 = require("../../lib/baseTrades");
+const core_pending_effect_1 = require("@civ-clone/core-pending-effect");
+const baseTrade_1 = require("../../lib/baseTrade");
 const goods_1 = require("@civ-clone/base-city-trade-route/lib/goods");
 const core_random_1 = require("@civ-clone/core-random");
 const escape_1 = require("@civ-clone/base-unit-agent/lib/escape");
@@ -50,7 +51,7 @@ exports.tradeRouteGoods = tradeRouteGoods;
  *
  * Emits `unit:trade-route-established` with the player, the home city, the city, the goods and the bonus.
  */
-const getRules = ({ capitalLink, baseTrades = new baseTrades_1.default(capitalLink), cityRegistry = CityRegistry_1.instance, engine = Engine_1.instance, interactionRegistry = InteractionRegistry_1.instance, playerResearchRegistry = PlayerResearchRegistry_1.instance, playerTreasuryRegistry = PlayerTreasuryRegistry_1.instance, randomNumberGenerator = core_random_1.instance, ruleRegistry = RuleRegistry_1.instance, tradeRouteRegistry = TradeRouteRegistry_1.instance, turn = Turn_1.instance, demanded = () => 0, }) => {
+const getRules = ({ capitalLink, pendingEffectRegistry = core_pending_effect_1.instance, cityRegistry = CityRegistry_1.instance, engine = Engine_1.instance, interactionRegistry = InteractionRegistry_1.instance, playerResearchRegistry = PlayerResearchRegistry_1.instance, playerTreasuryRegistry = PlayerTreasuryRegistry_1.instance, randomNumberGenerator = core_random_1.instance, ruleRegistry = RuleRegistry_1.instance, tradeRouteRegistry = TradeRouteRegistry_1.instance, turn = Turn_1.instance, demanded = () => 0, }) => {
     const knows = (player, AdvanceType) => {
         try {
             return playerResearchRegistry
@@ -83,10 +84,10 @@ const getRules = ({ capitalLink, baseTrades = new baseTrades_1.default(capitalLi
         (0, addTradeRoute_1.addTradeRoute)(holder, partner, {
             limit: (city) => (0, tradeRouteLimit_1.tradeRouteLimit)(city, ruleRegistry, tradeRoutes_1.tradeRoutesPerCity),
             replace: (city, routes, newPartner) => (0, addTradeRoute_1.replaceWeakest)((from, to) => to === newPartner
-                ? baseTrades.of(to)
+                ? (0, baseTrade_1.baseTradeOf)(to, { pendingEffectRegistry })
                 : (0, tradeRoutes_1.routeWorth)({
-                    partnerBase: baseTrades.of(to),
-                    link: capitalLink.routeLink(from.player(), from.tile(), to.tile()),
+                    partnerBase: (0, baseTrade_1.baseTradeOf)(to, { pendingEffectRegistry }),
+                    link: capitalLink.connection(from.player(), from.tile(), to.tile()),
                     airports: airports(from, to),
                     domestic: from.player() === to.player(),
                 }), true)(city, routes, newPartner),
@@ -116,13 +117,13 @@ const getRules = ({ capitalLink, baseTrades = new baseTrades_1.default(capitalLi
             roll = Math.floor(randomNumberGenerator() * 10), bonus = (0, tradeRoutes_1.deliveryBonus)({
                 distance: (0, capitalLink_1.diagonalDistance)(home.tile(), city.tile()),
                 mapSize: (0, mapSize_1.default)(city.tile().map().width() * city.tile().map().height()),
-                destinationBase: baseTrades.fresh(city),
-                homeBase: baseTrades.fresh(home),
+                destinationBase: (0, baseTrade_1.baseTradeOf)(city, { pendingEffectRegistry }),
+                homeBase: (0, baseTrade_1.baseTradeOf)(home, { pendingEffectRegistry }),
                 otherLandMass: capitalLink.landMass(home.tile()) !==
                     capitalLink.landMass(city.tile()),
                 domestic: owner === player,
                 freight: unit instanceof Freight_1.default,
-                link: capitalLink.routeLink(player, city.tile(), home.tile()),
+                link: capitalLink.connection(player, city.tile(), home.tile()),
                 airports: airports(city, home),
                 destinationSuperhighways: capitalLink.has(city, Superhighways_1.default),
                 homeSuperhighways: capitalLink.has(home, Superhighways_1.default),

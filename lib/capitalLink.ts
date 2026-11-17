@@ -197,52 +197,8 @@ export class CapitalLink {
     this._version++;
   }
 
-  /**
-   * What the turn's Palaces, capital links and route links are kept under: the turn, and how many times
-   *  `invalidateCapitals()` (or `invalidate()`) has been called. A cache of anything that changes with them can key on it.
-   */
-  key(): string {
+  private key(): string {
     return `${this._turn.value()}:${this._version}`;
-  }
-
-  // The route links asked for under `key()`: by player, then by the two squares.
-  private _routeLinks: {
-    key: string;
-    links: Map<Player, Map<Tile, Map<Tile, Link>>>;
-  } | null = null;
-
-  /**
-   * `connection(player, from, to)`, worked out once under `key()`: a trade route's link, asked each time its city's
-   *  yields are. Like a city's capital link, it changes at once when a road or railroad is built, pillaged or removed,
-   *  a city is founded, captured or destroyed, or terrain changes; a unit moving onto or off the route only counts
-   *  when the link is next worked out.
-   */
-  routeLink(player: Player, from: Tile, to: Tile): Link {
-    const key = this.key();
-
-    if (this._routeLinks === null || this._routeLinks.key !== key) {
-      this._routeLinks = { key, links: new Map() };
-    }
-
-    const byPlayer = this._routeLinks.links;
-
-    if (!byPlayer.has(player)) {
-      byPlayer.set(player, new Map());
-    }
-
-    const byFrom = byPlayer.get(player)!;
-
-    if (!byFrom.has(from)) {
-      byFrom.set(from, new Map());
-    }
-
-    const byTo = byFrom.get(from)!;
-
-    if (!byTo.has(to)) {
-      byTo.set(to, this.connection(player, from, to));
-    }
-
-    return byTo.get(to)!;
   }
 
   /** The cities with a standing Palace of each player, found once a turn. */

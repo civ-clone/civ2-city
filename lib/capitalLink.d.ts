@@ -92,19 +92,7 @@ export declare class CapitalLink {
   invalidate(): void;
   /** Forget the turn's Palaces and links, after a Palace may have been built or lost. */
   invalidateCapitals(): void;
-  /**
-   * What the turn's Palaces, capital links and route links are kept under: the turn, and how many times
-   *  `invalidateCapitals()` (or `invalidate()`) has been called. A cache of anything that changes with them can key on it.
-   */
-  key(): string;
-  private _routeLinks;
-  /**
-   * `connection(player, from, to)`, worked out once under `key()`: a trade route's link, asked each time its city's
-   *  yields are. Like a city's capital link, it changes at once when a road or railroad is built, pillaged or removed,
-   *  a city is founded, captured or destroyed, or terrain changes; a unit moving onto or off the route only counts
-   *  when the link is next worked out.
-   */
-  routeLink(player: Player, from: Tile, to: Tile): Link;
+  private key;
   /** The cities with a standing Palace of each player, found once a turn. */
   private palaces;
   has(city: City, Improvement: typeof CityImprovement): boolean;

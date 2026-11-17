@@ -20,6 +20,11 @@ import TradeRouteRegistry from '@civ-clone/core-city/TradeRouteRegistry';
 import Unit from '@civ-clone/core-unit/Unit';
 import YieldRule from '@civ-clone/core-city/Rules/Yield';
 import Yield from '@civ-clone/core-yield/Yield';
+import {
+  PendingEffect,
+  PendingEffectRegistry,
+} from '@civ-clone/core-pending-effect';
+import { BASE_TRADE } from '../lib/baseTrade';
 import { expect } from 'chai';
 import { instanceOf } from './lib/stubs';
 import tradeRouteEstablished, {
@@ -250,8 +255,6 @@ const linkOf = (
 ) =>
   ({
     connection: () => link,
-    routeLink: () => link,
-    key: () => 'turn',
     has: (city: City, Improvement: Function) =>
       (improvements.get(city) ?? []).includes(Improvement),
     landMass: (tile: object) => landMasses.get(tile) ?? null,
@@ -334,6 +337,7 @@ describe('civ2-city:unit/trade-route-established/deliver', (): void => {
     held = [] as [string, number][],
     sameOwner = false,
     homeless = false,
+    stored = null as number | null,
   } = {}) => {
     const me = { name: 'me' },
       them = { name: 'them' },
@@ -359,7 +363,14 @@ describe('civ2-city:unit/trade-route-established/deliver', (): void => {
       research: number[] = [],
       attitudes: [object, object, number][] = [],
       events: unknown[][] = [],
-      partners = held.map(([name, trade]) => cityOf(name, them, trade));
+      partners = held.map(([name, trade]) => cityOf(name, them, trade)),
+      pendingEffectRegistry = new PendingEffectRegistry();
+
+    if (stored !== null) {
+      pendingEffectRegistry.register(
+        new PendingEffect(BASE_TRADE, city, { value: String(stored) })
+      );
+    }
 
     partners.forEach((partner) =>
       tradeRouteRegistry.register(new TradeRoute(home, partner))
@@ -396,6 +407,7 @@ describe('civ2-city:unit/trade-route-established/deliver', (): void => {
             ],
           } as any,
           randomNumberGenerator: () => 0,
+          pendingEffectRegistry,
           ruleRegistry: new RuleRegistry(),
           tradeRouteRegistry,
           turn: { value: () => 250 } as any,
@@ -405,6 +417,7 @@ describe('civ2-city:unit/trade-route-established/deliver', (): void => {
 
     return {
       deliver: () => rule.process(unit, city),
+      pendingEffectRegistry,
       home,
       city,
       gold,
@@ -443,6 +456,18 @@ describe('civ2-city:unit/trade-route-established/deliver', (): void => {
 
     expect(freight.gold).eql([36]);
     expect(own.gold).eql([12]);
+  });
+
+  it("reads the destination's base trade as it was kept at its processing (unit.cpp:454), and keeps nothing", (): void => {
+    const { deliver, gold, pendingEffectRegistry } = setUp({ stored: 36 });
+
+    deliver();
+
+    // (36 + 12) × 24 / 24, not the live (12 + 12).
+    expect(gold).eql([48]);
+    expect(pendingEffectRegistry.entries().map((effect) => effect.data())).eql([
+      { value: '36' },
+    ]);
   });
 
   it('runs a homeless unit from the nearest city of its owner', (): void => {

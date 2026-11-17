@@ -27,7 +27,6 @@ const specialist_available_1 = require("./Rules/City/specialist-available");
 const tile_yield_1 = require("./Rules/City/tile-yield");
 const tiles_1 = require("./Rules/City/tiles");
 const trade_routes_1 = require("./Rules/City/trade-routes");
-const baseTrades_1 = require("./lib/baseTrades");
 const capitalLink_1 = require("./lib/capitalLink");
 const allied_1 = require("./lib/allied");
 const incited_1 = require("./Rules/City/incited");
@@ -53,7 +52,6 @@ const register = (game) => {
         unitRegistry: game.units,
         allied: (0, allied_1.default)(game.interactions),
     });
-    const baseTrades = new baseTrades_1.default(capitalLink);
     game.rules.register(...(0, building_complete_1.default)(game.engine), ...(0, building_held_1.default)(game.engine), ...(0, auto_build_1.default)({
         cityBuildRegistry: game.cityBuilds,
         cityRegistry: game.cities,
@@ -118,15 +116,15 @@ const register = (game) => {
         turn: game.turn,
         wonderRegistry: game.wonders,
     }), ...(0, process_yield_1.default)(game.cityBuilds, game.cityGrowth, game.units, game.rules, game.playerTreasuries, game.playerGovernments), ...(0, build_1.default)(game.clients, game.difficulty, game.rules), ...(0, specialist_available_1.default)(game.cityGrowth), ...(0, renamed_1.default)(game.cityNames), ...(0, shrink_1.default)(game.workedTiles, game.specialists, game.engine), ...(0, tile_yield_1.default)(game.tileImprovements, game.playerGovernments, game.playerResearch, game.pendingEffects), ...(0, tiles_1.default)(), ...(0, trade_routes_1.default)({
-        baseTrades,
         capitalLink,
+        pendingEffectRegistry: game.pendingEffects,
         tradeRouteRegistry: game.tradeRoutes,
     }), ...(0, tile_reassigned_1.default)(game.playerWorlds, game.cityGrowth, game.workedTiles, game.specialists, game.availableSpecialists), ...(0, tile_released_1.default)(game.engine), ...(0, tile_worked_1.default)(game.engine), ...(0, yield_1.default)(game.cityImprovements, game.playerGovernments, game.specialists, game.difficulty, game.clients), ...(0, action_1.default)(game.cityBuilds, game.cities, game.specialists), ...(0, turn_start_1.default)(game.cities, game.units, game.workedTiles, game.rules), ...(0, defeated_1.default)(game.engine), ...(0, trade_route_established_1.default)({
-        baseTrades,
         capitalLink,
         cityRegistry: game.cities,
         engine: game.engine,
         interactionRegistry: game.interactions,
+        pendingEffectRegistry: game.pendingEffects,
         playerResearchRegistry: game.playerResearch,
         playerTreasuryRegistry: game.playerTreasuries,
         randomNumberGenerator: game.rng,
