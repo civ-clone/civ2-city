@@ -8,6 +8,7 @@ import {
   chooseImprovementScore,
   priorityOf,
 } from '../../lib/chooseProduction';
+import { Structural } from '../../lib/spaceshipParts';
 import Airport from '@civ-clone/base-city-improvement-airport/Airport';
 import Aqueduct from '@civ-clone/base-city-improvement-aqueduct/Aqueduct';
 import Bank from '@civ-clone/base-city-improvement-bank/Bank';
@@ -49,9 +50,10 @@ import University from '@civ-clone/base-city-improvement-university/University';
 import Yield from '@civ-clone/core-yield/Yield';
 
 /**
- * The improvements Civ2 scores for a city on Auto, by their number (`IMP_*`). The Mass Transit, the Solar Plant, the
- *  spaceship and Capitalization always score 999 there (`city_choose_production_improvement_score`), so they aren't
- *  listed: a city on Auto never chooses them.
+ * The improvements Civ2 scores for a city on Auto, by their number (`IMP_*`). The Mass Transit, the Solar Plant and
+ *  Capitalization always score 999 there (`city_choose_production_improvement_score`), so they aren't listed: a city
+ *  on Auto never chooses them. Of the spaceship, only the structural is scored, as the original's city builds an SS
+ *  Structural.
  */
 export const scoredImprovements: [Buildable, ImprovementId][] = [
   [Palace, ImprovementId.Palace],
@@ -86,6 +88,8 @@ export const scoredImprovements: [Buildable, ImprovementId][] = [
   [Airport, ImprovementId.Airport],
   [PoliceStation, ImprovementId.PoliceStation],
   [PortFacility, ImprovementId.PortFacility],
+  // Only the structural: the original's city builds an SS Structural and turns it into another part as it finishes.
+  [Structural, ImprovementId.SpaceshipStructural],
 ] as unknown as [Buildable, ImprovementId][];
 
 /** Civ2's number for `item`: its own class's, or failing that one it's a kind of (a ruleset's subclass). */

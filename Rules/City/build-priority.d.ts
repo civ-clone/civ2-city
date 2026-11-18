@@ -8,9 +8,10 @@ import BuildPriority from '@civ-clone/core-city-build/Rules/BuildPriority';
 import City from '@civ-clone/core-city/City';
 import Yield from '@civ-clone/core-yield/Yield';
 /**
- * The improvements Civ2 scores for a city on Auto, by their number (`IMP_*`). The Mass Transit, the Solar Plant, the
- *  spaceship and Capitalization always score 999 there (`city_choose_production_improvement_score`), so they aren't
- *  listed: a city on Auto never chooses them.
+ * The improvements Civ2 scores for a city on Auto, by their number (`IMP_*`). The Mass Transit, the Solar Plant and
+ *  Capitalization always score 999 there (`city_choose_production_improvement_score`), so they aren't listed: a city
+ *  on Auto never chooses them. Of the spaceship, only the structural is scored, as the original's city builds an SS
+ *  Structural.
  */
 export declare const scoredImprovements: [Buildable, ImprovementId][];
 /** Civ2's number for `item`: its own class's, or failing that one it's a kind of (a ruleset's subclass). */

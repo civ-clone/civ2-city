@@ -117,6 +117,22 @@ import Friendly from '@civ-clone/base-leader-trait-aggression/Aggression/Friendl
 import GreatWall from '@civ-clone/base-wonder-great-wall/GreatWall';
 import Helicopter from '@civ-clone/base-unit-helicopter/Helicopter';
 import Ironclad from '@civ-clone/base-unit-ironclad/Ironclad';
+import {
+  Fuel,
+  Habitation,
+  LifeSupport,
+  Power,
+  Propulsion,
+  Structural,
+} from './spaceshipParts';
+import {
+  SpaceshipRegistry,
+  instance as spaceshipRegistryInstance,
+} from '@civ-clone/core-spaceship/SpaceshipRegistry';
+import ApolloProgram from '@civ-clone/base-wonder-apolloprogram/ApolloProgram';
+import Part from '@civ-clone/core-spaceship/Part';
+import SpaceFlight from '@civ-clone/base-science-advance-spaceflight/SpaceFlight';
+import Spaceship from '@civ-clone/core-spaceship/Spaceship';
 import ManhattanProject from '@civ-clone/base-wonder-manhattanproject/ManhattanProject';
 import ManufacturingPlant from '@civ-clone/base-city-improvement-manufacturingplant/ManufacturingPlant';
 import MichelangelosChapel from '@civ-clone/base-wonder-michelangeloschapel/MichelangelosChapel';
@@ -170,6 +186,7 @@ export interface ChooseProductionDependencies {
   playerResearchRegistry?: PlayerResearchRegistry;
   playerTradeRatesRegistry?: PlayerTradeRatesRegistry;
   ruleRegistry?: RuleRegistry;
+  spaceshipRegistry?: SpaceshipRegistry;
   specialistRegistry?: SpecialistRegistry;
   tileImprovementRegistry?: TileImprovementRegistry;
   unitRegistry?: UnitRegistry;
@@ -248,6 +265,7 @@ export const chooseProductionState = (
       playerResearchRegistry = playerResearchRegistryInstance,
       playerTradeRatesRegistry = playerTradeRatesRegistryInstance,
       ruleRegistry = ruleRegistryInstance,
+      spaceshipRegistry = spaceshipRegistryInstance,
       specialistRegistry = specialistRegistryInstance,
       tileImprovementRegistry = tileImprovementRegistryInstance,
       unitRegistry = unitRegistryInstance,
@@ -414,6 +432,62 @@ export const chooseProductionState = (
         })
       );
 
+  // The space race (`spaceship_race_active`, `ai_spaceship_race_behind`, `ai.cpp:6695`): active once anyone has built the
+  //  Apollo Program or a person knows Space Flight; a computer player is behind, above Chieftain and before its own
+  //  launch, once a person's ship has launched or a person knowing Space Flight has put as much into parts as it has.
+  //  Parts are counted at their groups' costs (structurals 80, components 160, modules 320). The game's being won isn't
+  //  asked: a won game is over.
+  const people = playerRegistry
+      .entries()
+      .filter((other: Player): boolean => isHuman(other, clientRegistry)),
+    shipOf = (owner: Player): Spaceship | null =>
+      spaceshipRegistry.getActiveByPlayer(owner),
+    partsOf = (ship: Spaceship | null): Part[] =>
+      ship === null ? [] : [...ship.activeParts(), ...ship.inactiveParts()],
+    launched = (owner: Player): boolean =>
+      spaceshipRegistry
+        .getBy('player', owner)
+        .some(
+          (ship: Spaceship): boolean =>
+            ship.launched() !== false && ship.successful() !== false
+        ),
+    exists = (owner: Player): boolean =>
+      launched(owner) || partsOf(shipOf(owner)).length > 0,
+    partsCost = (owner: Player): number =>
+      partsOf(shipOf(owner)).reduce(
+        (total: number, part: Part): number =>
+          total +
+          (part instanceof Structural
+            ? 80
+            : part instanceof Propulsion || part instanceof Fuel
+            ? 160
+            : part instanceof Habitation ||
+              part instanceof LifeSupport ||
+              part instanceof Power
+            ? 320
+            : 0),
+        0
+      ),
+    raceActive =
+      wonderRegistry
+        .entries()
+        .some((wonder: Wonder): boolean => wonder instanceof ApolloProgram) ||
+      people.some((other: Player): boolean => knows(other, SpaceFlight)),
+    shipLaunched = launched(player),
+    humanLaunched = people.some(launched),
+    behind =
+      raceActive &&
+      !shipLaunched &&
+      levelOf(gameDifficultyRegistry) !== 0 &&
+      !human &&
+      (humanLaunched ||
+        people.some(
+          (other: Player): boolean =>
+            other !== player &&
+            knows(other, SpaceFlight) &&
+            partsCost(player) <= partsCost(other)
+        ));
+
   let science = true;
 
   try {
@@ -509,10 +583,15 @@ export const chooseProductionState = (
     advancedFlightKnown: anyoneKnows(AdvancedFlight),
     rocketryKnown: anyoneKnows(Rocketry),
     knowsAdvancedFlight: knows(player, AdvancedFlight),
-    // No spaceship yet: `spaceRace` is 0, so Space Flight is never asked.
-    knowsSpaceFlight: false,
+    knowsSpaceFlight: knows(player, SpaceFlight),
     science,
-    spaceRace: 0,
+    spaceRace: (raceActive ? 1 : 0) + (behind ? 1 : 0),
+    shipLaunched,
+    structurals: partsOf(shipOf(player)).filter(
+      (part: Part): boolean => part instanceof Structural
+    ).length,
+    humanShipExists: people.some(exists),
+    humanLaunched,
     coastal: city
       .tile()
       .getNeighbours()

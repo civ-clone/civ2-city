@@ -125,8 +125,11 @@ effective @COSMIC values; the tables by government are civ2-government's, and th
   nothing, and Wonders rank only by civ2-wonder's own `BuildPriority`. civ2-city-improvement's and civ2-wonder's
   `BuildPriority` rules (on another scale) still add to a city on Auto's ranking until they leave Auto cities alone,
   so an Auto city can choose what Civ2 wouldn't, and seldom finds nothing. No CITYPREF.TXT list. The AI's continent policy (`continent_policy`, 5 assumed), reputation, vendettas,
-  power ranks (the first person stands for `best_human_rank`), subversion, the spaceship race and the AEGIS Cruiser
-  aren't kept, so their terms are left out; "next to the ocean" is any ocean, not ocean body 1.
+  power ranks (the first person stands for `best_human_rank`), subversion and the AEGIS Cruiser aren't kept, so their
+  terms are left out. The space race is (`spaceship_race_active` and `ai_spaceship_race_behind`, its parts at their
+  groups' costs), and a city on Auto scores the spaceship's structural as the original does
+  (`city_choose_production_spaceship_score`), except that it isn't forced over everything else as the original's
+  `choice_score = 999` would; the other parts aren't scored, as the original's city builds only the structural; "next to the ocean" is any ocean, not ocean body 1.
 - **Trade routes:** goods are names only (`lib/tradeRoutes`'s 16 keys, picked by the unit's id): no supply or demand,
   so the demand bonus is never paid, and a city keeps one route per partner each way (the original keeps a second one
   carrying other goods). No food caravans. A homeless unit's nearest city is by the world's distance, and a unit whose player has no city earns

@@ -140,6 +140,14 @@ export interface ChooseProductionState {
   science: boolean;
   /** `ai_spaceship_race_behind` + `spaceship_race_active`. */
   spaceRace: number;
+  /**
+   * The player's ship, for `city_choose_production_spaceship_score`: whether it has launched, and how many structurals
+   *  it has; whether any person has a ship (`civ_spaceship_exists`), and whether one has launched.
+   */
+  shipLaunched: boolean;
+  structurals: number;
+  humanShipExists: boolean;
+  humanLaunched: boolean;
   /** Adjacent to the ocean (`city_adjacent_to_body(city, 1)`). */
   coastal: boolean;
   /** `city_calc.aggressive_units`. */
@@ -196,7 +204,7 @@ export declare const coastalFortressScore: (
 /**
  * `city_choose_production_improvement_score` (~727): how little the city needs `improvement`, before
  *  `tryImprovementScore` weighs it. 999 for anything it doesn't want, and for what isn't scored here: the Mass Transit,
- *  the Solar Plant, the spaceship (no spaceship yet: Civ2 gives a structural 999 without one too) and Capitalization.
+ *  the Solar Plant and Capitalization. The spaceship's structural has `city_choose_production_spaceship_score`'s.
  */
 export declare const improvementScore: (
   improvement: ImprovementId,

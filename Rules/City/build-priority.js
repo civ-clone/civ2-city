@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.getRules = exports.improvementIdOf = exports.scoredImprovements = void 0;
 const chooseProductionState_1 = require("../../lib/chooseProductionState");
 const chooseProduction_1 = require("../../lib/chooseProduction");
+const spaceshipParts_1 = require("../../lib/spaceshipParts");
 const Airport_1 = require("@civ-clone/base-city-improvement-airport/Airport");
 const Aqueduct_1 = require("@civ-clone/base-city-improvement-aqueduct/Aqueduct");
 const Bank_1 = require("@civ-clone/base-city-improvement-bank/Bank");
@@ -39,9 +40,10 @@ const Supermarket_1 = require("@civ-clone/base-city-improvement-supermarket/Supe
 const Temple_1 = require("@civ-clone/base-city-improvement-temple/Temple");
 const University_1 = require("@civ-clone/base-city-improvement-university/University");
 /**
- * The improvements Civ2 scores for a city on Auto, by their number (`IMP_*`). The Mass Transit, the Solar Plant, the
- *  spaceship and Capitalization always score 999 there (`city_choose_production_improvement_score`), so they aren't
- *  listed: a city on Auto never chooses them.
+ * The improvements Civ2 scores for a city on Auto, by their number (`IMP_*`). The Mass Transit, the Solar Plant and
+ *  Capitalization always score 999 there (`city_choose_production_improvement_score`), so they aren't listed: a city
+ *  on Auto never chooses them. Of the spaceship, only the structural is scored, as the original's city builds an SS
+ *  Structural.
  */
 exports.scoredImprovements = [
     [Palace_1.default, chooseProduction_1.ImprovementId.Palace],
@@ -76,6 +78,8 @@ exports.scoredImprovements = [
     [Airport_1.default, chooseProduction_1.ImprovementId.Airport],
     [PoliceStation_1.default, chooseProduction_1.ImprovementId.PoliceStation],
     [PortFacility_1.default, chooseProduction_1.ImprovementId.PortFacility],
+    // Only the structural: the original's city builds an SS Structural and turns it into another part as it finishes.
+    [spaceshipParts_1.Structural, chooseProduction_1.ImprovementId.SpaceshipStructural],
 ];
 /** Civ2's number for `item`: its own class's, or failing that one it's a kind of (a ruleset's subclass). */
 const improvementIdOf = (item) => {

@@ -18,6 +18,7 @@ import { TileImprovementRegistry } from '@civ-clone/core-tile-improvement/TileIm
 import { UnitRegistry } from '@civ-clone/core-unit/UnitRegistry';
 import { WonderRegistry } from '@civ-clone/core-wonder/WonderRegistry';
 import City from '@civ-clone/core-city/City';
+import { SpaceshipRegistry } from '@civ-clone/core-spaceship/SpaceshipRegistry';
 import Player from '@civ-clone/core-player/Player';
 import Yield from '@civ-clone/core-yield/Yield';
 /** civ2-city-happiness' status for a city in civil disorder (`CITYF_DISORDER`), named here as `lib/celebrating` names its. */
@@ -41,6 +42,7 @@ export interface ChooseProductionDependencies {
   playerResearchRegistry?: PlayerResearchRegistry;
   playerTradeRatesRegistry?: PlayerTradeRatesRegistry;
   ruleRegistry?: RuleRegistry;
+  spaceshipRegistry?: SpaceshipRegistry;
   specialistRegistry?: SpecialistRegistry;
   tileImprovementRegistry?: TileImprovementRegistry;
   unitRegistry?: UnitRegistry;

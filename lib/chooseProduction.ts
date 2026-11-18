@@ -50,6 +50,9 @@ export enum ImprovementId {
   SpaceshipStructural = 35,
 }
 
+/** Chieftain's level. */
+const CHIEFTAIN = 0;
+
 /** The score of something the city doesn't want: `city_choose_production` starts every best score at this. */
 export const UNWANTED = 999;
 
@@ -160,6 +163,14 @@ export interface ChooseProductionState {
   science: boolean;
   /** `ai_spaceship_race_behind` + `spaceship_race_active`. */
   spaceRace: number;
+  /**
+   * The player's ship, for `city_choose_production_spaceship_score`: whether it has launched, and how many structurals
+   *  it has; whether any person has a ship (`civ_spaceship_exists`), and whether one has launched.
+   */
+  shipLaunched: boolean;
+  structurals: number;
+  humanShipExists: boolean;
+  humanLaunched: boolean;
   /** Adjacent to the ocean (`city_adjacent_to_body(city, 1)`). */
   coastal: boolean;
   /** `city_calc.aggressive_units`. */
@@ -318,7 +329,7 @@ export const coastalFortressScore = (
 /**
  * `city_choose_production_improvement_score` (~727): how little the city needs `improvement`, before
  *  `tryImprovementScore` weighs it. 999 for anything it doesn't want, and for what isn't scored here: the Mass Transit,
- *  the Solar Plant, the spaceship (no spaceship yet: Civ2 gives a structural 999 without one too) and Capitalization.
+ *  the Solar Plant and Capitalization. The spaceship's structural has `city_choose_production_spaceship_score`'s.
  */
 export const improvementScore = (
   improvement: ImprovementId,
@@ -677,7 +688,24 @@ export const improvementScore = (
       break;
 
     case ImprovementId.SpaceshipStructural:
-      // `city_choose_production_spaceship_score` starts from 999 and leaves it so with no spaceship to build.
+      // `city_choose_production_spaceship_score` (~657), for a ship that hasn't launched: a person's only while it has
+      //  fewer than 38 structurals. 4, or 2 once a person has a ship; less in a space race (behind it, or a person's
+      //  ship launched) above Chieftain. What can be built at all is the build rules', which leave a structural out of
+      //  the choice without Space Flight or the Apollo Program (the original asks `spaceship_choose_part_group`).
+      //  Not here: the original's forcing of the structural over everything else (`choice_score = 999`), which goes by
+      //  the other cities' builds and the best human's ship.
+      if (!s.shipLaunched && (!s.human || s.structurals < 38)) {
+        score = s.humanShipExists ? 2 : 4;
+
+        if (s.policy !== 0 && !s.defendedLandMass) {
+          defensive = s.threatened;
+        }
+
+        if (s.spaceRace > 1 && s.difficulty !== CHIEFTAIN) {
+          score -= s.humanLaunched ? 2 : 1;
+          defensive = s.threatened;
+        }
+      }
       break;
   }
 
