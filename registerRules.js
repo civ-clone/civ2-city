@@ -34,6 +34,7 @@ const incited_1 = require("./Rules/City/incited");
 const dependenciesOf_1 = require("@civ-clone/civ2-diplomacy/lib/dependenciesOf");
 const trade_route_established_1 = require("./Rules/Unit/trade-route-established");
 const yield_1 = require("./Rules/City/yield");
+const terms_1 = require("./Rules/Government/terms");
 const action_1 = require("./Rules/Player/action");
 const turn_start_1 = require("./Rules/Player/turn-start");
 const registerAvailableSpecialists_1 = require("./registerAvailableSpecialists");
@@ -134,6 +135,8 @@ const register = (game) => {
         tradeRouteRegistry: game.tradeRoutes,
         turn: game.turn,
     }), ...(0, moved_1.default)(game.rules, game.workedTiles), ...(0, unsupported_1.default)());
+    // For players to compare governments by: asked by nothing here.
+    game.rules.register(...(0, terms_1.default)());
 };
 exports.register = register;
 // The plugin loader imports each package for this side effect. Until it passes a `Game` of its own, dropping it would

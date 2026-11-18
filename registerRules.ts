@@ -31,6 +31,7 @@ import cityIncited from './Rules/City/incited';
 import dependenciesOf from '@civ-clone/civ2-diplomacy/lib/dependenciesOf';
 import unitTradeRouteEstablished from './Rules/Unit/trade-route-established';
 import cityYield from './Rules/City/yield';
+import governmentTerms from './Rules/Government/terms';
 import playerAction from './Rules/Player/action';
 import playerTurnStart from './Rules/Player/turn-start';
 import registerAvailableSpecialists from './registerAvailableSpecialists';
@@ -235,6 +236,9 @@ export const register = (game: Game): void => {
     ...unitMoved(game.rules, game.workedTiles),
     ...unitUnsupported()
   );
+
+  // For players to compare governments by: asked by nothing here.
+  game.rules.register(...governmentTerms());
 };
 
 // The plugin loader imports each package for this side effect. Until it passes a `Game` of its own, dropping it would
