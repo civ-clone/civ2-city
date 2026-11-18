@@ -703,6 +703,7 @@ export const improvementScore = (
 
         if (s.spaceRace > 1 && s.difficulty !== CHIEFTAIN) {
           score -= s.humanLaunched ? 2 : 1;
+          // The original only while defence isn't urgent (`defense_urgent`), which isn't kept: never, here.
           defensive = s.threatened;
         }
       }
