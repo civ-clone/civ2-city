@@ -74,6 +74,7 @@ const register = (game) => {
         playerResearchRegistry: game.playerResearch,
         playerTradeRatesRegistry: game.playerTradeRates,
         ruleRegistry: game.rules,
+        spaceshipRegistry: game.spaceships,
         specialistRegistry: game.specialists,
         tileImprovementRegistry: game.tileImprovements,
         unitRegistry: game.units,

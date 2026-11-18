@@ -22,6 +22,12 @@ import City from '@civ-clone/core-city/City';
 import CityBuild from '@civ-clone/core-city-build/CityBuild';
 import CityBuildRegistry from '@civ-clone/core-city-build/CityBuildRegistry';
 import CityRegistry from '@civ-clone/core-city/CityRegistry';
+import { Fuel, Habitation, Structural } from '../lib/spaceshipParts';
+import ApolloProgram from '@civ-clone/base-wonder-apolloprogram/ApolloProgram';
+import { improvementIdOf } from '../Rules/City/build-priority';
+import Part from '@civ-clone/core-spaceship/Part';
+import SpaceFlight from '@civ-clone/base-science-advance-spaceflight/SpaceFlight';
+import Spaceship from '@civ-clone/core-spaceship/Spaceship';
 import Granary from '@civ-clone/base-city-improvement-granary/Granary';
 import Library from '@civ-clone/base-city-improvement-library/Library';
 import { PendingEffectRegistry } from '@civ-clone/core-pending-effect';
@@ -42,7 +48,7 @@ import {
   UnitSupportProduction,
   Waste,
 } from '../Yields';
-import { governedBy, playedBy, sized } from './lib/stubs';
+import { atLevel, governedBy, playedBy, sized } from './lib/stubs';
 import LandMassRegistry from '@civ-clone/core-world/LandMassRegistry';
 import chooseProductionState from '../lib/chooseProductionState';
 import { expect } from 'chai';
@@ -113,6 +119,10 @@ const state = (
   knowsSpaceFlight: false,
   science: true,
   spaceRace: 0,
+  shipLaunched: false,
+  structurals: 0,
+  humanShipExists: false,
+  humanLaunched: false,
   coastal: false,
   aggressiveUnits: 0,
   nearestPortDistance: 9999,
@@ -539,5 +549,183 @@ describe('Civ2 Auto: the survey', (): void => {
     expect(s.humans).eql([
       { atWar: false, citiesOnLandMass: false, badReputation: false },
     ]);
+  });
+});
+
+describe('Civ2 Auto: the spaceship structural (city_choose_production_spaceship_score)', (): void => {
+  it('scores 4, 2 once a person has a ship, weighed as any improvement', (): void => {
+    // 4 × 10 × 3 / 3.
+    expect(score(ImprovementId.SpaceshipStructural)).equal(40);
+    expect(
+      score(ImprovementId.SpaceshipStructural, { humanShipExists: true })
+    ).equal(20);
+  });
+
+  it('wants it 1 more in a race it is behind, 2 once a person has launched, but not on Chieftain', (): void => {
+    expect(score(ImprovementId.SpaceshipStructural, { spaceRace: 2 })).equal(
+      30
+    );
+    expect(
+      score(ImprovementId.SpaceshipStructural, {
+        spaceRace: 2,
+        humanShipExists: true,
+        humanLaunched: true,
+      })
+    ).equal(0);
+    expect(
+      score(ImprovementId.SpaceshipStructural, { spaceRace: 2, difficulty: 0 })
+    ).equal(40);
+    // In a race that is only active, no more.
+    expect(score(ImprovementId.SpaceshipStructural, { spaceRace: 1 })).equal(
+      40
+    );
+  });
+
+  it("isn't wanted once the ship has launched, nor by a person with 38 structurals", (): void => {
+    expect(
+      chooseImprovementScore(
+        ImprovementId.SpaceshipStructural,
+        state({ shipLaunched: true })
+      )
+    ).equal(OUT_OF_RANGE);
+    expect(score(ImprovementId.SpaceshipStructural, { structurals: 38 })).equal(
+      OUT_OF_RANGE
+    );
+    expect(
+      score(ImprovementId.SpaceshipStructural, {
+        structurals: 38,
+        human: false,
+      })
+    ).equal(40);
+  });
+
+  it('is the score of the structural only, of the six parts', (): void => {
+    expect(improvementIdOf(Structural as unknown as Buildable)).equal(
+      ImprovementId.SpaceshipStructural
+    );
+    expect(improvementIdOf(Habitation as unknown as Buildable)).equal(null);
+  });
+});
+
+describe('Civ2 Auto: the space race (spaceship_race_active, ai_spaceship_race_behind)', (): void => {
+  const survey = ({
+    human = false,
+    apollo = false,
+    personKnows = false,
+    personParts = [] as (typeof Part)[],
+    ownParts = [] as (typeof Part)[],
+    personLaunched = false,
+    level = 3,
+  }) => {
+    const ruleRegistry = new RuleRegistry(),
+      player = {
+        id: () => 'player',
+        civilization: () => ({ leader: (): null => null }),
+      } as unknown as Player,
+      person = {
+        id: () => 'person',
+        civilization: () => ({ leader: (): null => null }),
+      } as unknown as Player,
+      tile = { getNeighbours: () => [], isWater: () => false } as unknown,
+      city = {
+        player: (): Player => player,
+        originalPlayer: (): Player => player,
+        tile: () => tile,
+        tiles: () => ({ entries: (): unknown[] => [] }),
+        tilesWorked: () => ({ entries: (): unknown[] => [] }),
+      } as unknown as City,
+      shipWith = (owner: Player, parts: (typeof Part)[], launched = false) =>
+        ({
+          player: () => owner,
+          activeParts: () => parts.map((P) => Object.create(P.prototype)),
+          inactiveParts: () => [],
+          launched: () => (launched ? 1 : false),
+          successful: () => null,
+        } as unknown as Spaceship),
+      ships = new Map<Player, Spaceship>([
+        [player, shipWith(player, ownParts)],
+        [person, shipWith(person, personParts, personLaunched)],
+      ]);
+
+    return chooseProductionState(city, [], {
+      cityGrowthRegistry: sized(3),
+      cityRegistry: new CityRegistry(),
+      clientRegistry: human ? playedBy(person, player) : playedBy(person),
+      gameDifficultyRegistry: atLevel(level),
+      landMassRegistry: { getByTile: () => null } as any,
+      playerGovernmentRegistry: governedBy(null),
+      playerRegistry: { entries: (): Player[] => [player, person] } as any,
+      playerResearchRegistry: {
+        getByPlayer: (who: Player) => ({
+          completed: (Advance: unknown) =>
+            who === person && personKnows && Advance === SpaceFlight,
+        }),
+      } as any,
+      ruleRegistry,
+      spaceshipRegistry: {
+        getActiveByPlayer: (who: Player) => ships.get(who) ?? null,
+        getBy: (key: string, who: Player) =>
+          ships.has(who) ? [ships.get(who)] : [],
+      } as any,
+      wonderRegistry: {
+        entries: () => (apollo ? [Object.create(ApolloProgram.prototype)] : []),
+        getByPlayer: (): unknown[] => [],
+        getByCity: (): unknown[] => [],
+      } as any,
+      citizens: () => ({ happy: 0, unhappy: 0 }),
+    });
+  };
+
+  it('is off until anyone builds the Apollo Program or a person knows Space Flight', (): void => {
+    expect(survey({}).spaceRace).equal(0);
+    expect(survey({ apollo: true }).spaceRace).equal(1);
+    expect(survey({ personKnows: true, personParts: [] }).spaceRace).equal(2);
+  });
+
+  it('puts a computer player behind when a person knowing Space Flight has put as much into parts, or has launched', (): void => {
+    // The person's 2 structurals (160) against the computer player's Habitation (320): not behind.
+    expect(
+      survey({
+        apollo: true,
+        personKnows: true,
+        personParts: [Structural, Structural],
+        ownParts: [Habitation],
+      }).spaceRace
+    ).equal(1);
+    expect(
+      survey({
+        apollo: true,
+        personKnows: true,
+        personParts: [Habitation],
+        ownParts: [Structural, Structural, Structural, Structural],
+      }).spaceRace
+    ).equal(2);
+    expect(
+      survey({ apollo: true, personLaunched: true, ownParts: [Habitation] })
+        .spaceRace
+    ).equal(2);
+    // Never a person, nor on Chieftain.
+    expect(
+      survey({ apollo: true, personLaunched: true, human: true }).spaceRace
+    ).equal(1);
+    expect(
+      survey({ apollo: true, personLaunched: true, level: 0 }).spaceRace
+    ).equal(1);
+  });
+
+  it('reads what the structural score needs: the ships, the structurals, and Space Flight', (): void => {
+    const s = survey({
+      apollo: true,
+      personKnows: true,
+      personParts: [Structural],
+      ownParts: [Structural, Structural, Fuel],
+      personLaunched: true,
+    });
+
+    expect(s.structurals).equal(2);
+    expect(s.shipLaunched).false;
+    expect(s.humanShipExists).true;
+    expect(s.humanLaunched).true;
+    expect(s.knowsSpaceFlight).false;
   });
 });
