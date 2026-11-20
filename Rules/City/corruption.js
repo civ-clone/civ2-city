@@ -22,6 +22,7 @@ const Created_2 = require("@civ-clone/core-city-improvement/Rules/Created");
 const Destroyed_1 = require("@civ-clone/core-city/Rules/Destroyed");
 const Courthouse_1 = require("@civ-clone/base-city-improvement-courthouse/Courthouse");
 const Criterion_1 = require("@civ-clone/core-rule/Criterion");
+const Description_1 = require("@civ-clone/core-rule/Description");
 const Effect_1 = require("@civ-clone/core-rule/Effect");
 const Priorities_1 = require("@civ-clone/core-rule/Priorities");
 const Low_1 = require("@civ-clone/core-rule/Priorities/Low");
@@ -82,7 +83,7 @@ const getRules = (dependencies = {}) => {
                 amount: (0, reduceYields_1.reduceYield)(yields, Yields_1.Trade),
                 distance,
             }), nearest === null && !input.capital ? 'no-capital' : String(distance));
-        })),
+        }), new Description_1.default({ type: 'capital', subject: Palace_1.default, yield: Yields_1.Corruption })),
         // `city_calc_shields_pollution`: waste takes from the city's shields, after the Factory's and the plants' bonuses
         //  (`YieldModifier`s) and its units' support (the other `Cost`s), so it comes last.
         new Cost_1.default('civ2-city:city/cost/waste', new Low_1.default(), new Effect_1.default((city, yields) => {
@@ -103,6 +104,12 @@ const getRules = (dependencies = {}) => {
                 buildingPalaceWithNoCapital: nearest === null && buildingPalace(city, cityBuildRegistry),
             });
             return waste > 0 ? [new Yields_1.Waste(waste, `link-${link}`)] : [];
+        }), new Description_1.default({ type: 'capital', subject: Palace_1.default, yield: Yields_1.Waste }, {
+            type: 'yield_percent',
+            subject: Courthouse_1.default,
+            yield: Yields_1.Waste,
+            value: -(1 - 1 / corruption_1.CORRUPTION_HALVED_BY),
+            of: 'total',
         })),
         // The capital link's cost grids follow the land.
         new TerrainChanged_1.default('civ2-city:capital-link/terrain-changed', new Effect_1.default(() => capitalLink.invalidate())),

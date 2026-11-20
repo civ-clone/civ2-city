@@ -36,7 +36,9 @@ import City from '@civ-clone/core-city/City';
 import CityBuild from '@civ-clone/core-city-build/CityBuild';
 import Gold from '@civ-clone/base-city-yield-gold/Gold';
 import governmentOf from '../../lib/government';
+import Capitalization from '@civ-clone/base-city-improvement-capitalization/Capitalization';
 import Criterion from '@civ-clone/core-rule/Criterion';
+import Description from '@civ-clone/core-rule/Description';
 import Effect from '@civ-clone/core-rule/Effect';
 import ProcessYield from '@civ-clone/core-city/Rules/ProcessYield';
 import { UnitSupportProduction } from '../../Yields';
@@ -133,7 +135,14 @@ export const getRules: (
 
         cityBuild.check();
       }
-    )
+    ),
+    // What Capitalization does, for the Civilopedia (civ-clone/web-renderer#1196).
+    new Description({
+      type: 'converts',
+      subject: Capitalization,
+      yield: Production,
+      into: Gold,
+    })
   ),
 ];
 

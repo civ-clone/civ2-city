@@ -30,6 +30,12 @@ export type CorruptionInput = {
   clampDistance?: number | null;
 };
 
+/**
+ * What the Palace, in its own city, or a Courthouse divides corruption and waste by (`city_calc_corruption`'s halving),
+ *  read by `corruption` and by what the waste rule says the Courthouse does (civ-clone/web-renderer#1196).
+ */
+export const CORRUPTION_HALVED_BY: number = 2;
+
 /** The corruption divisor for a government level, which a celebrating Democracy takes one past the table. */
 const divisorOf = (level: number): number =>
   corruptionDivisor[Math.min(level, corruptionDivisor.length - 1)];
@@ -81,7 +87,10 @@ export const corruption = ({
     amount
   );
 
-  return capital || courthouse ? result >> 1 : result;
+  // `result` is never negative, so this is `result >> 1`, as the original has it.
+  return capital || courthouse
+    ? Math.trunc(result / CORRUPTION_HALVED_BY)
+    : result;
 };
 
 /**
