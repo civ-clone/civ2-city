@@ -61,8 +61,8 @@ const getRules = (cityBuildRegistry = CityBuildRegistry_1.instance, cityGrowthRe
     new Description_1.default({
         type: 'converts',
         subject: Capitalization_1.default,
-        from: Yields_1.Production,
-        to: Gold_1.default,
+        yield: Yields_1.Production,
+        into: Gold_1.default,
     })),
 ];
 exports.getRules = getRules;

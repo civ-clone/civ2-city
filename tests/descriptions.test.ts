@@ -82,8 +82,8 @@ describe('descriptions', (): void => {
         {
           type: 'converts',
           subject: Capitalization,
-          from: Production,
-          to: Gold,
+          yield: Production,
+          into: Gold,
         },
       ],
     ]);
