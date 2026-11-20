@@ -19,6 +19,11 @@ export type CorruptionInput = {
   clampDistance?: number | null;
 };
 /**
+ * What the Palace, in its own city, or a Courthouse divides corruption and waste by (`city_calc_corruption`'s halving),
+ *  read by `corruption` and by what the waste rule says the Courthouse does (civ-clone/web-renderer#1196).
+ */
+export declare const CORRUPTION_HALVED_BY: number;
+/**
  * `city_calc_corruption` (OpenCiv2 `src/auto/city.cpp`, richardpenman/civ2@49f26ec), for trade and shields alike:
  *  distance × amount × 3 / (divisor × 20), rounded down, at most the amount, then halved (rounding down) by the Palace
  *  or a Courthouse. Communism measures every city at @COSMIC's distance. A celebrating city counts its government one

@@ -22,7 +22,11 @@ import {
   PlayerGovernmentRegistry,
   instance as playerGovernmentRegistryInstance,
 } from '@civ-clone/core-government/PlayerGovernmentRegistry';
-import { shieldWaste, tradeCorruption } from '../../lib/corruption';
+import {
+  CORRUPTION_HALVED_BY,
+  shieldWaste,
+  tradeCorruption,
+} from '../../lib/corruption';
 import City from '@civ-clone/core-city/City';
 import Cost from '@civ-clone/core-city/Rules/Cost';
 import Built from '@civ-clone/core-tile-improvement/Rules/Built';
@@ -37,6 +41,7 @@ import CityImprovementCreated from '@civ-clone/core-city-improvement/Rules/Creat
 import Destroyed from '@civ-clone/core-city/Rules/Destroyed';
 import Courthouse from '@civ-clone/base-city-improvement-courthouse/Courthouse';
 import Criterion from '@civ-clone/core-rule/Criterion';
+import Description from '@civ-clone/core-rule/Description';
 import Tile from '@civ-clone/core-world/Tile';
 import Effect from '@civ-clone/core-rule/Effect';
 import { High } from '@civ-clone/core-rule/Priorities';
@@ -153,7 +158,8 @@ export const getRules = (
           }),
           nearest === null && !input.capital ? 'no-capital' : String(distance)
         );
-      })
+      }),
+      new Description({ type: 'capital', subject: Palace, yield: Corruption })
     ),
 
     // `city_calc_shields_pollution`: waste takes from the city's shields, after the Factory's and the plants' bonuses
@@ -198,7 +204,17 @@ export const getRules = (
           });
 
         return waste > 0 ? [new Waste(waste, `link-${link}`)] : [];
-      })
+      }),
+      new Description(
+        { type: 'capital', subject: Palace, yield: Waste },
+        {
+          type: 'yield_percent',
+          subject: Courthouse,
+          yield: Waste,
+          value: -(1 - 1 / CORRUPTION_HALVED_BY),
+          of: 'total',
+        }
+      )
     ),
 
     // The capital link's cost grids follow the land.

@@ -13,7 +13,9 @@ const capitalizationRules_1 = require("@civ-clone/base-city-improvement-capitali
 const governments_1 = require("@civ-clone/civ2-rules/data/governments");
 const Gold_1 = require("@civ-clone/base-city-yield-gold/Gold");
 const government_1 = require("../../lib/government");
+const Capitalization_1 = require("@civ-clone/base-city-improvement-capitalization/Capitalization");
 const Criterion_1 = require("@civ-clone/core-rule/Criterion");
+const Description_1 = require("@civ-clone/core-rule/Description");
 const Effect_1 = require("@civ-clone/core-rule/Effect");
 const ProcessYield_1 = require("@civ-clone/core-city/Rules/ProcessYield");
 const Yields_2 = require("../../Yields");
@@ -54,6 +56,13 @@ const getRules = (cityBuildRegistry = CityBuildRegistry_1.instance, cityGrowthRe
             pays: (city) => (0, government_1.default)(city.player(), playerGovernmentRegistry) !== governments_1.ANARCHY,
         });
         cityBuild.check();
+    }), 
+    // What Capitalization does, for the Civilopedia (civ-clone/web-renderer#1196).
+    new Description_1.default({
+        type: 'converts',
+        subject: Capitalization_1.default,
+        from: Yields_1.Production,
+        to: Gold_1.default,
     })),
 ];
 exports.getRules = getRules;
