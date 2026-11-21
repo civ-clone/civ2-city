@@ -16,12 +16,18 @@ import {
   forgetBaseTrade,
   storeBaseTrade,
 } from '../../lib/baseTrade';
-import { routeIncome, tradeRoutesPerCity } from '../../lib/tradeRoutes';
+import {
+  AIRPORT_ROUTE_LINK,
+  SUPERHIGHWAYS_ROUTE_LINK,
+  routeIncome,
+  tradeRoutesPerCity,
+} from '../../lib/tradeRoutes';
 import Airport from '@civ-clone/base-city-improvement-airport/Airport';
 import CapitalLink from '../../lib/capitalLink';
 import Captured from '@civ-clone/core-city/Rules/Captured';
 import City from '@civ-clone/core-city/City';
 import Criterion from '@civ-clone/core-rule/Criterion';
+import Description from '@civ-clone/core-rule/Description';
 import Destroyed from '@civ-clone/core-city/Rules/Destroyed';
 import Effect from '@civ-clone/core-rule/Effect';
 import { Low } from '@civ-clone/core-rule/Priorities';
@@ -102,7 +108,23 @@ export const getRules = ({
             }),
           tradeRouteRegistry
         );
-      })
+      }),
+      // An Airport in both cities makes the route's link count as at least `AIRPORT_ROUTE_LINK`; a city's own
+      //  Superhighways add `SUPERHIGHWAYS_ROUTE_LINK` to it, whatever the partner has.
+      new Description(
+        {
+          type: 'trade_route_link',
+          subject: Airport,
+          value: AIRPORT_ROUTE_LINK,
+          both: 'both',
+        },
+        {
+          type: 'trade_route_link',
+          subject: Superhighways,
+          value: SUPERHIGHWAYS_ROUTE_LINK,
+          both: 'own',
+        }
+      )
     );
 
   return [

@@ -1,18 +1,30 @@
 import { CORRUPTION_HALVED_BY, corruption } from '../lib/corruption';
 import { Corruption, Gold, Production, Waste } from '../Yields';
+import {
+  AIRPORT_ROUTE_LINK,
+  RouteIncomeInput,
+  RouteLink,
+  SUPERHIGHWAYS_ROUTE_LINK,
+  routeIncome,
+  routeWorth,
+} from '../lib/tradeRoutes';
+import Airport from '@civ-clone/base-city-improvement-airport/Airport';
+import CapitalLink from '../lib/capitalLink';
 import Capitalization from '@civ-clone/base-city-improvement-capitalization/Capitalization';
 import Courthouse from '@civ-clone/base-city-improvement-courthouse/Courthouse';
 import { EffectDescription } from '@civ-clone/core-rule/Description';
 import { MONARCHY } from '@civ-clone/civ2-rules/data/governments';
 import Palace from '@civ-clone/base-city-improvement-palace/Palace';
 import Rule from '@civ-clone/core-rule/Rule';
+import Superhighways from '@civ-clone/base-city-improvement-superhighways/Superhighways';
 import cityCorruption from '../Rules/City/corruption';
 import { expect } from 'chai';
 import processYield from '../Rules/City/process-yield';
+import tradeRoutes from '../Rules/City/trade-routes';
 
-// What the Palace, the Courthouse and Capitalization say they do here, for the Civilopedia
-//  (civ-clone/web-renderer#1196), checked against what the rules do. The Courthouse's halving of trade corruption, and
-//  every other building, are civ2-city-improvement's.
+// What the Palace, the Courthouse, Capitalization, the Airport and Superhighways say they do here, for the Civilopedia
+//  (civ-clone/web-renderer#1196, #1291), checked against what the rules do. The Courthouse's halving of trade
+//  corruption, and every other building, are civ2-city-improvement's.
 
 const describedBy = (rules: Rule[]): [string | null, EffectDescription][] =>
   rules.flatMap((rule) =>
@@ -87,5 +99,78 @@ describe('descriptions', (): void => {
         },
       ],
     ]);
+  });
+
+  it("the Airport and Superhighways strengthen a route's link as they say, in the income rule", (): void => {
+    expect(describedBy(tradeRoutes({ capitalLink: {} as CapitalLink }))).to.eql(
+      [
+        [
+          'civ2-city:city/yield/trade-routes',
+          {
+            type: 'trade_route_link',
+            subject: Airport,
+            value: 1,
+            both: 'both',
+          },
+        ],
+        [
+          'civ2-city:city/yield/trade-routes',
+          {
+            type: 'trade_route_link',
+            subject: Superhighways,
+            value: 1,
+            both: 'own',
+          },
+        ],
+      ]
+    );
+
+    const [[, airport], [, superhighways]] = describedBy(
+      tradeRoutes({ capitalLink: {} as CapitalLink })
+    );
+
+    expect(airport.value).to.equal(AIRPORT_ROUTE_LINK);
+    expect(superhighways.value).to.equal(SUPERHIGHWAYS_ROUTE_LINK);
+
+    for (let base = 0; base <= 40; base += 3) {
+      for (let partnerBase = 0; partnerBase <= 40; partnerBase += 5) {
+        for (const link of [0, 1, 2] as RouteLink[]) {
+          for (const domestic of [false, true]) {
+            const input: RouteIncomeInput = {
+                base,
+                partnerBase,
+                link,
+                airports: false,
+                superhighways: false,
+                domestic,
+              },
+              atLeast = Math.max(link, airport.value as number) as RouteLink;
+
+            // An Airport in both: the link counts as at least the value described.
+            expect(routeIncome({ ...input, airports: true })).to.equal(
+              routeIncome({ ...input, link: atLeast })
+            );
+            expect(
+              routeWorth({ partnerBase, link, airports: true, domestic })
+            ).to.equal(
+              routeWorth({
+                partnerBase,
+                link: atLeast,
+                airports: false,
+                domestic,
+              })
+            );
+
+            // This city's Superhighways: the value described more.
+            expect(routeIncome({ ...input, superhighways: true })).to.equal(
+              routeIncome({
+                ...input,
+                link: (link + (superhighways.value as number)) as RouteLink,
+              })
+            );
+          }
+        }
+      }
+    }
   });
 });

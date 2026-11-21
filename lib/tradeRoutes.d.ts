@@ -7,6 +7,16 @@ export declare const tradeRoutesPerCity = 3;
  *  bonus reads. Food (a negative commodity) isn't carried here: there are no food caravans.
  */
 export declare const goods: string[];
+/**
+ * The least a route's link counts as when both its cities have an Airport, in what a route gives
+ *  (`city_calc_trade_happiness`) and what it's worth (`city_add_trade_route`).
+ */
+export declare const AIRPORT_ROUTE_LINK = 1;
+/**
+ * What a city's Superhighways add to its route's link in what the route gives it (`city_calc_trade_happiness`); and,
+ *  on a Caravan or Freight's delivery, what each city's add (`unit_caravan_trade_revenue`).
+ */
+export declare const SUPERHIGHWAYS_ROUTE_LINK = 1;
 /** A route's link (`map_road_connection`): 0 none, 1 a road, 2 all railroad. */
 export type RouteLink = 0 | 1 | 2;
 export interface RouteIncomeInput {

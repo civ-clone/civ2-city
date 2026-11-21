@@ -34,6 +34,18 @@ export const goods = [
   'Uranium',
 ];
 
+/**
+ * The least a route's link counts as when both its cities have an Airport, in what a route gives
+ *  (`city_calc_trade_happiness`) and what it's worth (`city_add_trade_route`).
+ */
+export const AIRPORT_ROUTE_LINK = 1;
+
+/**
+ * What a city's Superhighways add to its route's link in what the route gives it (`city_calc_trade_happiness`); and,
+ *  on a Caravan or Freight's delivery, what each city's add (`unit_caravan_trade_revenue`).
+ */
+export const SUPERHIGHWAYS_ROUTE_LINK = 1;
+
 /** A route's link (`map_road_connection`): 0 none, 1 a road, 2 all railroad. */
 export type RouteLink = 0 | 1 | 2;
 
@@ -68,12 +80,12 @@ export const routeIncome = ({
   let value = (base + partnerBase + 4) >> 3,
     bonus: number = link;
 
-  if (airports && bonus < 2) {
-    bonus = 1;
+  if (airports && bonus < AIRPORT_ROUTE_LINK) {
+    bonus = AIRPORT_ROUTE_LINK;
   }
 
   if (superhighways) {
-    bonus++;
+    bonus += SUPERHIGHWAYS_ROUTE_LINK;
   }
 
   if (bonus !== 0) {
@@ -113,8 +125,8 @@ export const routeWorth = ({
   let value = partnerBase,
     bonus: number = link;
 
-  if (airports && bonus < 2) {
-    bonus = 1;
+  if (airports && bonus < AIRPORT_ROUTE_LINK) {
+    bonus = AIRPORT_ROUTE_LINK;
   }
 
   if (bonus !== 0) {
@@ -259,11 +271,11 @@ export const deliveryBonus = ({
   }
 
   if (destinationSuperhighways) {
-    bonus++;
+    bonus += SUPERHIGHWAYS_ROUTE_LINK;
   }
 
   if (homeSuperhighways) {
-    bonus++;
+    bonus += SUPERHIGHWAYS_ROUTE_LINK;
   }
 
   revenue += (bonus * revenue) >> 1;
