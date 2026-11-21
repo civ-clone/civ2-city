@@ -9,6 +9,7 @@ const tradeRoutes_1 = require("../../lib/tradeRoutes");
 const Airport_1 = require("@civ-clone/base-city-improvement-airport/Airport");
 const Captured_1 = require("@civ-clone/core-city/Rules/Captured");
 const Criterion_1 = require("@civ-clone/core-rule/Criterion");
+const Description_1 = require("@civ-clone/core-rule/Description");
 const Destroyed_1 = require("@civ-clone/core-city/Rules/Destroyed");
 const Effect_1 = require("@civ-clone/core-rule/Effect");
 const Priorities_1 = require("@civ-clone/core-rule/Priorities");
@@ -46,6 +47,19 @@ const getRules = ({ capitalLink, pendingEffectRegistry = core_pending_effect_1.i
             superhighways: capitalLink.has(city, Superhighways_1.default),
             domestic: partner.player() === player,
         }), tradeRouteRegistry);
+    }), 
+    // An Airport in both cities makes the route's link count as at least `AIRPORT_ROUTE_LINK`; a city's own
+    //  Superhighways add `SUPERHIGHWAYS_ROUTE_LINK` to it, whatever the partner has.
+    new Description_1.default({
+        type: 'trade_route_link',
+        subject: Airport_1.default,
+        value: tradeRoutes_1.AIRPORT_ROUTE_LINK,
+        both: 'both',
+    }, {
+        type: 'trade_route_link',
+        subject: Superhighways_1.default,
+        value: tradeRoutes_1.SUPERHIGHWAYS_ROUTE_LINK,
+        both: 'own',
     }));
     return [
         income,
