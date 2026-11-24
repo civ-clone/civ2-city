@@ -11,6 +11,7 @@ const TileImprovementRegistry_1 = require("@civ-clone/core-tile-improvement/Tile
 const terrainTable_1 = require("@civ-clone/civ2-world/lib/terrainTable");
 const CityTileYield_1 = require("@civ-clone/core-city/Rules/CityTileYield");
 const Criterion_1 = require("@civ-clone/core-rule/Criterion");
+const Description_1 = require("@civ-clone/core-rule/Description");
 const Effect_1 = require("@civ-clone/core-rule/Effect");
 const Mine_1 = require("@civ-clone/base-tile-improvement-mine/Mine");
 const Pollution_1 = require("@civ-clone/base-tile-improvement-pollution/Pollution");
@@ -103,6 +104,12 @@ const getRules = (tileImprovementRegistry = TileImprovementRegistry_1.instance, 
     ...[Yields_1.Food, Yields_1.Production, Yields_1.Trade].map((YieldType) => new CityTileYield_1.default(`civ2-city:city/tile-yield/pollution/${YieldType.name}`, (0, tileYieldPipeline_1.tileYieldPriority)('pollution'), new Criterion_1.default((city, tile) => has(tile, Pollution_1.default, tileImprovementRegistry)), new Effect_1.default((city, tile, yields) => {
         const total = (0, exports.totalOf)(yields, YieldType);
         change(yields, YieldType, ((total + 1) >> 1) - total, Pollution_1.default.name);
+    }), 
+    // What it does, for the Civilopedia (civ-clone/web-renderer#621).
+    new Description_1.default({
+        type: 'tile_yield_halved',
+        subject: Pollution_1.default,
+        yield: YieldType,
     }))),
     // Nothing below 0 (lines 2937–2939).
     ...[Yields_1.Food, Yields_1.Production, Yields_1.Trade].map((YieldType) => new CityTileYield_1.default(`civ2-city:city/tile-yield/floor/${YieldType.name}`, (0, tileYieldPipeline_1.tileYieldPriority)('floor'), new Criterion_1.default((city, tile, yields) => (0, exports.totalOf)(yields, YieldType) < 0), new Effect_1.default((city, tile, yields) => change(yields, YieldType, -(0, exports.totalOf)(yields, YieldType), 'civ2-city:floor')))),
