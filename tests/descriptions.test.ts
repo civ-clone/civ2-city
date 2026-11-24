@@ -20,6 +20,9 @@ import Superhighways from '@civ-clone/base-city-improvement-superhighways/Superh
 import cityCorruption from '../Rules/City/corruption';
 import { expect } from 'chai';
 import processYield from '../Rules/City/process-yield';
+import Pollution from '@civ-clone/base-tile-improvement-pollution/Pollution';
+import { Food, Trade } from '../Yields';
+import tileYield from '../Rules/City/tile-yield';
 import tradeRoutes from '../Rules/City/trade-routes';
 
 // What the Palace, the Courthouse, Capitalization, the Airport and Superhighways say they do here, for the Civilopedia
@@ -172,5 +175,22 @@ describe('descriptions', (): void => {
         }
       }
     }
+  });
+
+  it("Pollution says it halves each of its square's yields, on the rules that halve them", (): void => {
+    const rules = tileYield().filter((rule) => rule.descriptions().length > 0);
+
+    expect(rules.map((rule) => rule.id())).to.eql(
+      ['Food', 'Production', 'Trade'].map(
+        (name) => `civ2-city:city/tile-yield/pollution/${name}`
+      )
+    );
+    expect(rules.flatMap((rule) => rule.descriptions())).to.eql(
+      [Food, Production, Trade].map((YieldType) => ({
+        type: 'tile_yield_halved',
+        subject: Pollution,
+        yield: YieldType,
+      }))
+    );
   });
 });

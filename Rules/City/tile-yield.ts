@@ -27,6 +27,7 @@ import {
 import City from '@civ-clone/core-city/City';
 import CityTileYield from '@civ-clone/core-city/Rules/CityTileYield';
 import Criterion from '@civ-clone/core-rule/Criterion';
+import Description from '@civ-clone/core-rule/Description';
 import Effect from '@civ-clone/core-rule/Effect';
 import Mine from '@civ-clone/base-tile-improvement-mine/Mine';
 import Pollution from '@civ-clone/base-tile-improvement-pollution/Pollution';
@@ -275,6 +276,12 @@ export const getRules: (
           const total = totalOf(yields, YieldType);
 
           change(yields, YieldType, ((total + 1) >> 1) - total, Pollution.name);
+        }),
+        // What it does, for the Civilopedia (civ-clone/web-renderer#621).
+        new Description({
+          type: 'tile_yield_halved',
+          subject: Pollution,
+          yield: YieldType,
         })
       )
   ),
